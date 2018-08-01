@@ -61,7 +61,16 @@ namespace SuperVillains.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to You have received ${0} for your service in arresting or eliminating threat..
+        ///   Looks up a localized string similar to You have received ${0} for your service in arresting suspect(s)..
+        /// </summary>
+        internal static string CALLOUT_SV_BONUS_ARREST_SALARY {
+            get {
+                return ResourceManager.GetString("CALLOUT_SV_BONUS_ARREST_SALARY", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You have received ${0} for your service in arresting or killing suspects..
         /// </summary>
         internal static string CALLOUT_SV_BONUS_SALARY {
             get {
@@ -70,7 +79,7 @@ namespace SuperVillains.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to We have reports of gang-related violence in {0}, available units please respond..
+        ///   Looks up a localized string similar to We have reports of gang-related violence by The Lost OMG in {0}, available units please respond..
         /// </summary>
         internal static string CALLOUT_SV_JOHNNY_MESSAGE {
             get {
@@ -115,7 +124,7 @@ namespace SuperVillains.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Be advised, we are dealing with a dangerous biker leader: {0}, born {1} in Alderney. Advise approaching units to be on the alert..
+        ///   Looks up a localized string similar to Be advised, we are dealing with a dangerous biker leader: {0}, born {1} in Alderney. Advise all approaching units to be on the alert..
         /// </summary>
         internal static string TEXT_INFO_RELAY_SV_JOHNNY {
             get {
@@ -124,7 +133,16 @@ namespace SuperVillains.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Be advised, we have relayed information about suspect. Suspect is identified as {0}, born {1} in Northwood, Algonquin. Two others are unknown at this time and are considered dangerous. Proceed with extreme prejudice..
+        ///   Looks up a localized string similar to Task update, officer. Several NGD members are on site and being attacked by The Lost OMG members. They require immediate assistance, pronto!.
+        /// </summary>
+        internal static string TEXT_INFO_RELAY_SV_JOHNNY_MISSION_UPDATE {
+            get {
+                return ResourceManager.GetString("TEXT_INFO_RELAY_SV_JOHNNY_MISSION_UPDATE", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Be advised, we have relayed information about suspect. Suspect is identified as {0}, born {1} in Northwood, Algonquin. Three others are unknown at this time and are considered armed and dangerous. Proceed with extreme prejudice..
         /// </summary>
         internal static string TEXT_INFO_RELAY_SV_LUIS {
             get {

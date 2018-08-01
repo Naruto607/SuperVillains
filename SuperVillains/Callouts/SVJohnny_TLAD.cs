@@ -38,7 +38,8 @@ namespace SuperVillains.Callouts
         /// The criminal models.
         /// </summary>
         private string[] criminalModels = new string[]
-            { "M_Y_GBIK_LO_01", "M_Y_GBIK_LO_02", "M_Y_GLOST_01", "M_Y_GLOST_02", "M_Y_GLOST_03",
+            {
+                "M_Y_GBIK_LO_01", "M_Y_GBIK_LO_02", "M_Y_GLOST_01", "M_Y_GLOST_02", "M_Y_GLOST_03",
                 "M_Y_GLOST_04", "M_Y_GLOST_05", "M_Y_GLOST_06", "LOSTBUDDY_01", "LOSTBUDDY_02",
                 "LOSTBUDDY_03", "LOSTBUDDY_04", "LOSTBUDDY_05", "LOSTBUDDY_06", "LOSTBUDDY_07",
                 "LOSTBUDDY_08", "LOSTBUDDY_09", "LOSTBUDDY_10", "LOSTBUDDY_11", "LOSTBUDDY_12",
@@ -225,15 +226,16 @@ namespace SuperVillains.Callouts
                             Functions.SetPedIsOwnedByScript(criminal, this, true);
                             criminal.RelationshipGroup = RelationshipGroup.Gang_Biker2;
                             criminal.ChangeRelationship(RelationshipGroup.Gang_Biker2, Relationship.Companion);
+                            criminal.ChangeRelationship(RelationshipGroup.Criminal, Relationship.Like);
                             criminal.ChangeRelationship(RelationshipGroup.Cop, Relationship.Hate);
                             criminal.CantBeDamagedByRelationshipGroup(RelationshipGroup.Gang_Biker2, base.OnCalloutAccepted());
 
                             // We don't want the criminal to flee yet
                             criminal.DisablePursuitAI = true;
-                            criminal.EquipWeapon();
 
                             criminal.Weapons.RemoveAll();
                             criminal.Weapons.FromType(Weapon.TLAD_Automatic9mm).Ammo = 999;
+                            criminal.DefaultWeapon = Weapon.TLAD_Automatic9mm;
                             if (Common.GetRandomBool(0,3,1))
                                 criminal.Weapons.FromType(Weapon.Rifle_AK47).Ammo = 150;
                             else criminal.Weapons.FromType(Weapon.TLAD_AssaultShotgun).Ammo = 128;
@@ -259,11 +261,17 @@ namespace SuperVillains.Callouts
                 {
                     // Create Johnny
                     johnny = new LPed(this.spawnPoint.Position.Around((float)10), "IG_JOHNNYBIKER", LPed.EPedGroup.MissionPed);
-                    johnny.PersonaData = new PersonaData(new DateTime(1974, 3, 17), 13, "Johnny", "Klebitz", true, 9, true);
-                    johnny.RelationshipGroup = RelationshipGroup.Gang_Biker2;
+                    johnny.PersonaData = new PersonaData(new DateTime(1974, 3, 17, 8, 30, 0, DateTimeKind.Utc), 13, "Johnny", "Klebitz", true, 9, true);
+                    johnny.RelationshipGroup = RelationshipGroup.Special;
+                    johnny.ChangeRelationship(RelationshipGroup.Special, Relationship.Companion);
                     johnny.ChangeRelationship(RelationshipGroup.Gang_Biker2, Relationship.Companion);
                     johnny.ChangeRelationship(RelationshipGroup.Cop, Relationship.Hate);
                     johnny.CantBeDamagedByRelationshipGroup(RelationshipGroup.Gang_Biker2, base.OnCalloutAccepted());
+                    johnny.CantBeDamagedByRelationshipGroup(RelationshipGroup.Special, base.OnCalloutAccepted());
+                    johnny.BecomeMissionCharacter();
+
+                    // Place near any criminal ped if he's in a building
+                    if (johnny.EnsurePedIsNotInBuilding(johnny.Position) == false) johnny.Position = criminals[Common.GetRandomValue(0, criminals.Count-1)].Position + new Vector3(1.0f, 1.5f, 0);
 
                     // We don't want the criminal to flee yet
                     johnny.DisablePursuitAI = true;
@@ -272,8 +280,9 @@ namespace SuperVillains.Callouts
                     johnny.Weapons.RemoveAll();
                     johnny.Weapons.FromType(Weapon.Handgun_DesertEagle).Ammo = 999;
                     johnny.Weapons.FromType(Weapon.TLAD_GrenadeLauncher).Ammo = 100;
-                    johnny.Weapons.FromType(Weapon.Melee_Knife);
+                    johnny.Weapons.FromType(Weapon.Melee_Knife).Ammo = 1;
                     johnny.Weapons.Select(Weapon.TLAD_GrenadeLauncher);
+                    johnny.DefaultWeapon = Weapon.TLAD_GrenadeLauncher;
 
                     int tempVar = Common.GetRandomValue(100, 500);
                     johnny.MaxHealth = tempVar;
@@ -291,10 +300,16 @@ namespace SuperVillains.Callouts
                     // Create Clay
                     clay = new LPed(johnny.Position, "IG_CLAY", LPed.EPedGroup.MissionPed);
                     clay.PersonaData = new PersonaData(new DateTime(1977, 5, 16), 20, "Clay", "", true, 6, true);
-                    clay.RelationshipGroup = RelationshipGroup.Gang_Biker2;
+                    clay.RelationshipGroup = RelationshipGroup.Special;
+                    clay.ChangeRelationship(RelationshipGroup.Special, Relationship.Companion);
                     clay.ChangeRelationship(RelationshipGroup.Gang_Biker2, Relationship.Companion);
                     clay.ChangeRelationship(RelationshipGroup.Cop, Relationship.Hate);
                     clay.CantBeDamagedByRelationshipGroup(RelationshipGroup.Gang_Biker2, base.OnCalloutAccepted());
+                    clay.CantBeDamagedByRelationshipGroup(RelationshipGroup.Special, base.OnCalloutAccepted());
+                    clay.BecomeMissionCharacter();
+
+                    // Place near any criminal ped if he's in a building
+                    if (clay.EnsurePedIsNotInBuilding(clay.Position) == false) clay.Position = criminals[Common.GetRandomValue(0, criminals.Count-1)].Position + new Vector3(1.0f, -1.5f, 0);
 
                     // We don't want the criminal to flee yet
                     clay.DisablePursuitAI = true;
@@ -302,6 +317,7 @@ namespace SuperVillains.Callouts
 
                     clay.Weapons.RemoveAll();
                     clay.Weapons.FromType(Weapon.Handgun_Glock).Ammo = 999;
+                    clay.DefaultWeapon = Weapon.Handgun_Glock;
                     clay.Weapons.FromType(Weapon.Rifle_M4).Ammo = 150;
                     clay.Weapons.FromType(Weapon.TLAD_PipeBomb).Ammo = 3;
                     clay.Weapons.FromType(Weapon.Melee_Knife);
@@ -323,10 +339,16 @@ namespace SuperVillains.Callouts
                     // Create Terry
                     terry = new LPed(johnny.Position, "IG_TERRY", LPed.EPedGroup.MissionPed);
                     terry.PersonaData = new PersonaData(new DateTime(1977, 8, 29), 14, "Terry", "", true, 8, true);
-                    terry.RelationshipGroup = RelationshipGroup.Gang_Biker2;
+                    terry.RelationshipGroup = RelationshipGroup.Special;
                     terry.ChangeRelationship(RelationshipGroup.Gang_Biker2, Relationship.Companion);
+                    terry.ChangeRelationship(RelationshipGroup.Special, Relationship.Companion);
                     terry.ChangeRelationship(RelationshipGroup.Cop, Relationship.Hate);
                     terry.CantBeDamagedByRelationshipGroup(RelationshipGroup.Gang_Biker2, base.OnCalloutAccepted());
+                    terry.CantBeDamagedByRelationshipGroup(RelationshipGroup.Special, base.OnCalloutAccepted());
+                    terry.BecomeMissionCharacter();
+
+                    // Place near any criminal ped if he's in a building
+                    if (terry.EnsurePedIsNotInBuilding(terry.Position) == false) terry.Position = criminals[Common.GetRandomValue(0, criminals.Count-1)].Position + new Vector3(-1.0f, 1.5f, 0);
 
                     // We don't want the criminal to flee yet
                     terry.DisablePursuitAI = true;
@@ -338,6 +360,7 @@ namespace SuperVillains.Callouts
                     terry.Weapons.FromType(Weapon.SMG_MP5).Ammo = 300;
                     terry.Weapons.FromType(Weapon.Melee_Knife);
                     terry.Weapons.Select(Weapon.SMG_MP5);
+                    terry.DefaultWeapon = Weapon.SMG_MP5;
 
                     terry.MaxHealth = 250;
                     terry.Health = 250;
@@ -353,13 +376,15 @@ namespace SuperVillains.Callouts
                 }
 
                 // Chance to spawn NGD Personnel fighting each other
+                // If spawned, it'll start fighting immediately
                 if (Common.GetRandomBool(0, 2, 1))
                 {
+                    isOfficerCalledIn = true;
                     NGD_Personnels = new List<LPed>();
                     random = Common.GetRandomValue(6, 13);
                     for (int i = 0; i < random; i++)
                     {
-                        LPed NGD = new LPed(this.spawnPoint.Position, Common.GetRandomCollectionValue<string>(this.NGD_MemberModels), LPed.EPedGroup.Cop);
+                        LPed NGD = new LPed(World.GetPositionAround(this.spawnPoint.Position, 15f).ToGround(), Common.GetRandomCollectionValue<string>(this.NGD_MemberModels), LPed.EPedGroup.Cop);
                         if (NGD.isObjectValid()) // derived from ValidityCheck - greetings to LtFlash
                         {
                             Functions.AddToScriptDeletionList(NGD, this);
@@ -367,10 +392,10 @@ namespace SuperVillains.Callouts
                             NGD.RelationshipGroup = RelationshipGroup.Cop;
                             NGD.ChangeRelationship(RelationshipGroup.Cop, Relationship.Companion);
                             NGD.ChangeRelationship(RelationshipGroup.Gang_Biker2, Relationship.Hate);
+                            NGD.ChangeRelationship(RelationshipGroup.Special, Relationship.Hate);
 
                             // We don't want the personnel to flee yet
                             NGD.DisablePursuitAI = true;
-                            NGD.EquipWeapon();
 
                             NGD.Weapons.RemoveAll();
                             NGD.Weapons.Glock.Ammo = 999;
@@ -379,11 +404,13 @@ namespace SuperVillains.Callouts
                             {
                                 NGD.Weapons.BasicSniperRifle.Ammo = 100;
                                 NGD.Weapons.BasicSniperRifle.Select();
+                                NGD.DefaultWeapon = Weapon.SniperRifle_Basic;
                             }
                             else
                             {
                                 NGD.Weapons.AssaultRifle_M4.Ammo = 999;
                                 NGD.Weapons.AssaultRifle_M4.Select();
+                                NGD.DefaultWeapon = Weapon.Rifle_M4;
                             }
 
                             NGD.PriorityTargetForEnemies = true;
@@ -393,20 +420,20 @@ namespace SuperVillains.Callouts
                             this.NGD_Personnels.Add(NGD);
                         }
                     }
+                    this.State = EShootoutState.Fighting;
+                    this.Engage();
 
-                    // Chance to start fighting immediately
-                    if (Common.GetRandomBool(0, 2, 1))
-                    {
-                        this.State = EShootoutState.Fighting;
-                        this.Engage();
+                    // Request one backup unit automatically
+                    Functions.RequestPoliceBackupAtPosition(LPlayer.LocalPlayer.Ped.Position);
+                    Functions.PlaySoundUsingPosition("DFROM_DISPATCH_2_UNITS_FROM POSITION", LPlayer.LocalPlayer.Ped.Position);
 
-                        // Request one backup unit automatically
-                        Functions.RequestPoliceBackupAtPosition(LPlayer.LocalPlayer.Ped.Position);
-                        Functions.PlaySoundUsingPosition("DFROM_DISPATCH_2_UNITS_FROM POSITION", LPlayer.LocalPlayer.Ped.Position);
-                    }
+                    // Create random vehicle
+                    Vehicle ngdveh1 = World.CreateVehicle(World.GetNextPositionOnStreet(this.spawnPoint.Position.Around(18.1f)).ToGround());
+                    Vehicle ngdveh2 = World.CreateVehicle(ngdveh1.Position.Around(3f).ToGround());
 
-                    Functions.AddTextToTextwall(string.Format(Resources.TEXT_INFO_RELAY_SV_JOHNNY, johnny.PersonaData.FullName, johnny.PersonaData.BirthDay),
-                        Functions.GetStringFromLanguageFile("POLICE_SCANNER_CONTROL"));
+                    // Release them as an ambient vehicle
+                    ngdveh1.NoLongerNeeded();
+                    ngdveh2.NoLongerNeeded();
                 }
                 isReady = true;
             }
@@ -421,6 +448,8 @@ namespace SuperVillains.Callouts
                 this.RegisterStateCallback(EShootoutState.Fighting, this.InCombat);
                 this.RegisterStateCallback(EShootoutState.Prank, this.Prank);
                 this.State = EShootoutState.WaitingForPlayer;
+                Functions.AddTextToTextwall(string.Format(Resources.TEXT_INFO_RELAY_SV_JOHNNY, johnny.PersonaData.FullName, johnny.PersonaData.BirthDay),
+                    Functions.GetStringFromLanguageFile("POLICE_SCANNER_CONTROL"));
                 Functions.PrintText(Functions.GetStringFromLanguageFile("CALLOUT_GET_TO_CRIME_SCENE"), 8000);
             }
 
@@ -442,8 +471,6 @@ namespace SuperVillains.Callouts
         public override void End()
         {
             base.End();
-            int salary = 3000;
-
             this.State = EShootoutState.None;
 
             if (this.blip.isObjectValid()) // derived from ValidityCheck - greetings to LtFlash
@@ -454,13 +481,6 @@ namespace SuperVillains.Callouts
             if (this.pursuit != null)
             {
                 Functions.ForceEndPursuit(this.pursuit);
-            }
-
-            if (!this.IsPrankCall)
-            {
-                Functions.AddTextToTextwall(Functions.GetStringFromLanguageFile("CALLOUT_SHOOTOUT_END_TW"), Functions.GetStringFromLanguageFile("POLICE_SCANNER_CONTROL"));
-                Functions.PrintText(string.Format(Resources.CALLOUT_SV_BONUS_SALARY, salary), 8000);
-                LPlayer.LocalPlayer.Money += salary;
             }
         }
 
@@ -476,11 +496,12 @@ namespace SuperVillains.Callouts
                     foreach (LPed criminal in this.criminals)
                     {
                         criminal.Task.WanderAround();
+                        criminal.Task.FightAgainstHatedTargets(criminal.RangeToDetectEnemies);
                     }
-                    foreach (LPed NGD_Member in this.NGD_Personnels)
+                    /*foreach (LPed NGD_Member in this.NGD_Personnels)
                     {
                         NGD_Member.Task.FightAgainstHatedTargets((float)Common.GetRandomValue(100, 200));
-                    }
+                    }*/
                 }
 
                 // Create another unit to respond to the call
@@ -542,14 +563,9 @@ namespace SuperVillains.Callouts
                 {
                     this.State = EShootoutState.Fighting;
                     this.Engage();
+                    this.Player_Yell();
 
                     Functions.PrintText(Functions.GetStringFromLanguageFile("CALLOUT_SHOOTOUT_FIGHT_SUSPECTS"), 5000);
-
-                    if (LPlayer.LocalPlayer.Model != new Model("M_Y_SWAT") && LPlayer.LocalPlayer.Model != new Model("M_M_FBI"))
-                        LPlayer.LocalPlayer.Ped.SayAmbientSpeech("SPOT_SUSPECT");
-                    else if (LPlayer.LocalPlayer.Model == new Model("M_Y_SWAT") || LPlayer.LocalPlayer.Model == new Model("M_M_FBI"))
-                        LPlayer.LocalPlayer.Ped.SayAmbientSpeech("DRAW_GUN");
-                    else LPlayer.LocalPlayer.Ped.SayAmbientSpeech("TARGET");
                 }
             }
         }
@@ -565,7 +581,8 @@ namespace SuperVillains.Callouts
                 {
                     // Enable chase AI and extend sense range so suspects won't flee immediately but fight longer
                     criminal.DisablePursuitAI = false;
-                    criminal.RangeToDetectEnemies = 80f;
+                    criminal.RangeToDetectEnemies = 80f*4;
+                    criminal.StartKillingSpree(true);
                 }
             }
 
@@ -573,7 +590,31 @@ namespace SuperVillains.Callouts
             Functions.SetPursuitDontEnableCopBlips(this.pursuit, false);
             Functions.SetPursuitAllowWeaponsForSuspects(this.pursuit, true);
             Functions.SetPursuitForceSuspectsToFight(this.pursuit, true);
-            Functions.SetPursuitIsActiveDelayed(this.pursuit, 2500, 5000);
+            if (isOfficerCalledIn)
+            {
+                Functions.SetPursuitIsActiveDelayed(this.pursuit, 0, Common.GetRandomValue(1000, 5000));
+                Functions.SetPursuitTactics(this.pursuit, true);
+                Functions.SetPursuitHelicopterTactics(this.pursuit, true);
+                Functions.SetPursuitMaximumUnits(this.pursuit, 40, 40);
+
+                DelayedCaller.Call(delegate
+                {
+                    Functions.AddTextToTextwall(Resources.TEXT_INFO_RELAY_SV_JOHNNY_MISSION_UPDATE, Functions.GetStringFromLanguageFile("POLICE_SCANNER_CONTROL"));
+                }, this, 5000);
+            }
+            else Functions.SetPursuitIsActiveDelayed(this.pursuit, 2500, 5000);
+        }
+
+        /// <summary>
+        /// Reports player to Control to confirm in contact with suspect.
+        /// </summary>
+        private void Player_Yell()
+        {
+            if (LPlayer.LocalPlayer.Model != new Model("M_Y_SWAT") && LPlayer.LocalPlayer.Model != new Model("M_M_FBI"))
+                LPlayer.LocalPlayer.Ped.SayAmbientSpeech("SPOT_SUSPECT");
+            else if (LPlayer.LocalPlayer.Model == new Model("M_Y_SWAT") || LPlayer.LocalPlayer.Model == new Model("M_M_FBI"))
+                LPlayer.LocalPlayer.Ped.SayAmbientSpeech("DRAW_GUN");
+            else LPlayer.LocalPlayer.Ped.SayAmbientSpeech("TARGET");
         }
 
         /// <summary>
@@ -583,7 +624,11 @@ namespace SuperVillains.Callouts
         {
             if (!Functions.IsPursuitStillRunning(this.pursuit))
             {
+                int salary = 6800;
                 this.SetCalloutFinished(true, true, true);
+                Functions.AddTextToTextwall(Functions.GetStringFromLanguageFile("CALLOUT_SHOOTOUT_END_TW"), Functions.GetStringFromLanguageFile("POLICE_SCANNER_CONTROL"));
+                Functions.PrintText(string.Format(Resources.CALLOUT_SV_BONUS_SALARY, salary), 8000);
+                LPlayer.LocalPlayer.Money += salary;
                 this.End();
             }
         }

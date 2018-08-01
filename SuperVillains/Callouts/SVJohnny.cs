@@ -186,7 +186,6 @@ namespace SuperVillains.Callouts
 
                             // We don't want the criminal to flee yet
                             criminal.DisablePursuitAI = true;
-                            criminal.EquipWeapon();
 
                             // Set up weapons
                             criminal.Weapons.RemoveAll();
@@ -195,6 +194,7 @@ namespace SuperVillains.Callouts
                             criminal.Weapons.FromType(Weapon.Melee_Knife);
                             criminal.Weapons.FromType(Weapon.Thrown_Molotov).Ammo = 2;
                             criminal.Weapons.Select(Weapon.Thrown_Molotov);
+                            criminal.DefaultWeapon = Weapon.Shotgun_Basic;
 
                             criminal.ComplianceChance = Common.GetRandomValue(25, 75);
 
@@ -209,24 +209,26 @@ namespace SuperVillains.Callouts
                     }
                 }
 
-                if (this.criminals.Count == 0)
-                {
-                    isReady = false;
-                }
+                if (this.criminals.Count == 0) isReady = false;
                 else
                 {
                     // Create Johnny
                     johnny = new LPed(this.spawnPoint.Position.Around((float)10), "IG_JOHNNYBIKER", LPed.EPedGroup.MissionPed);
-                    johnny.PersonaData = new PersonaData(new DateTime(1974, 3, 17), 13, "Johnny", "Klebitz", true, 9, true);
-                    johnny.RelationshipGroup = RelationshipGroup.Gang_Biker2;
+                    johnny.PersonaData = new PersonaData(new DateTime(1974, 3, 17, 8, 30, 0, DateTimeKind.Utc), 13, "Johnny", "Klebitz", true, 9, true);
+                    johnny.RelationshipGroup = RelationshipGroup.Special;
+                    johnny.ChangeRelationship(RelationshipGroup.Special, Relationship.Companion);
                     johnny.ChangeRelationship(RelationshipGroup.Gang_Biker2, Relationship.Companion);
                     johnny.ChangeRelationship(RelationshipGroup.Gang_Italian, Relationship.Hate);
                     johnny.ChangeRelationship(RelationshipGroup.Cop, Relationship.Hate);
                     johnny.CantBeDamagedByRelationshipGroup(RelationshipGroup.Gang_Biker2, true);
+                    johnny.CantBeDamagedByRelationshipGroup(RelationshipGroup.Special, true);
+                    johnny.BecomeMissionCharacter();
+
+                    // Place near any criminal ped if he's in a building
+                    if (!johnny.EnsurePedIsNotInBuilding(johnny.Position)) johnny.Position = criminals[Common.GetRandomValue(0, criminals.Count-1)].Position + new Vector3(1.0f, 1.5f, 0);
 
                     // We don't want the criminal to flee yet
                     johnny.DisablePursuitAI = true;
-                    johnny.EquipWeapon();
 
                     // Set up weapons
                     johnny.Weapons.RemoveAll();
@@ -234,6 +236,7 @@ namespace SuperVillains.Callouts
                     johnny.Weapons.AssaultRifle_AK47.Ammo = 300;
                     johnny.Weapons.Knife.Ammo = 1;
                     johnny.Weapons.AssaultRifle_AK47.Select();
+                    johnny.DefaultWeapon = Weapon.Rifle_AK47;
                     johnny.ComplianceChance = Common.GetRandomValue(0, 30);
 
                     // Make default of the ped's component variation
@@ -258,21 +261,25 @@ namespace SuperVillains.Callouts
                             criminal.ChangeRelationship(RelationshipGroup.Gang_Italian, Relationship.Companion);
                             criminal.ChangeRelationship(RelationshipGroup.Cop, Relationship.Hate);
                             criminal.ChangeRelationship(RelationshipGroup.Gang_Biker2, Relationship.Hate);
+                            criminal.CantBeDamagedByRelationshipGroup(RelationshipGroup.Gang_Italian, true);
 
                             // We don't want the criminal to flee yet
                             criminal.DisablePursuitAI = true;
-                            criminal.EquipWeapon();
 
                             criminal.Weapons.RemoveAll();
                             criminal.Weapons.Glock.Ammo = 999;
                             criminal.Weapons.Uzi.Ammo = 999;
                             criminal.Weapons.Knife.Ammo = 1;
                             if (Common.GetRandomBool(0, 50, 1))
+                            {
                                 criminal.Weapons.Uzi.Select();
+                                criminal.DefaultWeapon = Weapon.SMG_Uzi;
+                            }
                             else
                             {
                                 criminal.Weapons.AssaultRifle_M4.Ammo = 999;
                                 criminal.Weapons.AssaultRifle_M4.Select();
+                                criminal.DefaultWeapon = Weapon.Rifle_M4;
                             }
 
                             Functions.AddPedToPursuit(this.pursuit, criminal);
@@ -291,9 +298,6 @@ namespace SuperVillains.Callouts
                         Functions.RequestPoliceBackupAtPosition(LPlayer.LocalPlayer.Ped.Position);
                         Functions.PlaySoundUsingPosition("DFROM_DISPATCH_3_UNITS_FROM POSITION FOR CRIM_A_DOMESTIC_DISTURBANCE", LPlayer.LocalPlayer.Ped.Position);
                     }
-
-                    Functions.AddTextToTextwall(string.Format(Resources.TEXT_INFO_RELAY_SV_JOHNNY, johnny.PersonaData.FullName, johnny.PersonaData.BirthDay),
-                        Functions.GetStringFromLanguageFile("POLICE_SCANNER_CONTROL"));
                 }
                 isReady = true;
             }
@@ -308,6 +312,8 @@ namespace SuperVillains.Callouts
                 this.RegisterStateCallback(EShootoutState.Fighting, this.InCombat);
                 this.RegisterStateCallback(EShootoutState.Prank, this.Prank);
                 this.State = EShootoutState.WaitingForPlayer;
+                Functions.AddTextToTextwall(string.Format(Resources.TEXT_INFO_RELAY_SV_JOHNNY, johnny.PersonaData.FullName, johnny.PersonaData.BirthDay),
+                    Functions.GetStringFromLanguageFile("POLICE_SCANNER_CONTROL"));
                 Functions.PrintText(Functions.GetStringFromLanguageFile("CALLOUT_GET_TO_CRIME_SCENE"), 8000);
             }
 
@@ -329,8 +335,6 @@ namespace SuperVillains.Callouts
         public override void End()
         {
             base.End();
-            int salary = 1000;
-
             this.State = EShootoutState.None;
 
             if (ValidityCheck.isObjectValid(this.blip))
@@ -341,13 +345,6 @@ namespace SuperVillains.Callouts
             if (this.pursuit != null)
             {
                 Functions.ForceEndPursuit(this.pursuit);
-            }
-
-            if (!this.IsPrankCall)
-            {
-                Functions.AddTextToTextwall(Functions.GetStringFromLanguageFile("CALLOUT_SHOOTOUT_END_TW"), Functions.GetStringFromLanguageFile("POLICE_SCANNER_CONTROL"));
-                Functions.PrintText(string.Format(Resources.CALLOUT_SV_BONUS_SALARY, salary), 8000);
-                LPlayer.LocalPlayer.Money += salary;
             }
         }
 
@@ -363,6 +360,7 @@ namespace SuperVillains.Callouts
                     foreach (LPed criminal in this.criminals)
                     {
                         criminal.Task.WanderAround();
+                        criminal.StartKillingSpree(true);
                     }
                 }
 
@@ -448,7 +446,8 @@ namespace SuperVillains.Callouts
                 {
                     // Enable chase AI and extend sense range so suspects won't flee immediately but fight longer
                     criminal.DisablePursuitAI = false;
-                    criminal.RangeToDetectEnemies = 80f;
+                    criminal.RangeToDetectEnemies = 80f*3;
+                    criminal.StartKillingSpree(true);
                 }
             }
 
@@ -466,7 +465,11 @@ namespace SuperVillains.Callouts
         {
             if (!Functions.IsPursuitStillRunning(this.pursuit))
             {
+                int salary = 4000;
                 this.SetCalloutFinished(true, true, true);
+                Functions.AddTextToTextwall(Functions.GetStringFromLanguageFile("CALLOUT_SHOOTOUT_END_TW"), Functions.GetStringFromLanguageFile("POLICE_SCANNER_CONTROL"));
+                Functions.PrintText(string.Format(Resources.CALLOUT_SV_BONUS_SALARY, salary), 8000);
+                LPlayer.LocalPlayer.Money += salary;
                 this.End();
             }
         }
@@ -476,6 +479,7 @@ namespace SuperVillains.Callouts
         /// </summary>
         private void Prank()
         {
+            // TODO: Set a nearest ped on the street as a prank caller - easily identified by someone continuously talking on the phone
         }
 
         /// <summary>

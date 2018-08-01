@@ -117,11 +117,14 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="CALLOUT_SV_BONUS_ARREST_SALARY" xml:space="preserve">
+    <value>You have received ${0} for your service in arresting suspect(s).</value>
+  </data>
   <data name="CALLOUT_SV_BONUS_SALARY" xml:space="preserve">
-    <value>You have received ${0} for your service in arresting or eliminating threat.</value>
+    <value>You have received ${0} for your service in arresting or killing suspects.</value>
   </data>
   <data name="CALLOUT_SV_JOHNNY_MESSAGE" xml:space="preserve">
-    <value>We have reports of gang-related violence in {0}, available units please respond.</value>
+    <value>We have reports of gang-related violence by The Lost OMG in {0}, available units please respond.</value>
   </data>
   <data name="CALLOUT_SV_LUIS_MESSAGE" xml:space="preserve">
     <value>FIB is requesting assistance for peace disturbance of a civilian in {0}.</value>
@@ -136,10 +139,13 @@
     <value>We have suspects in contact with officers on duty at {0}, backup is required.</value>
   </data>
   <data name="TEXT_INFO_RELAY_SV_JOHNNY" xml:space="preserve">
-    <value>Be advised, we are dealing with a dangerous biker leader: {0}, born {1} in Alderney. Advise approaching units to be on the alert.</value>
+    <value>Be advised, we are dealing with a dangerous biker leader: {0}, born {1} in Alderney. Advise all approaching units to be on the alert.</value>
+  </data>
+  <data name="TEXT_INFO_RELAY_SV_JOHNNY_MISSION_UPDATE" xml:space="preserve">
+    <value>Task update, officer. Several NGD members are on site and being attacked by The Lost OMG members. They require immediate assistance, pronto!</value>
   </data>
   <data name="TEXT_INFO_RELAY_SV_LUIS" xml:space="preserve">
-    <value>Be advised, we have relayed information about suspect. Suspect is identified as {0}, born {1} in Northwood, Algonquin. Two others are unknown at this time and are considered dangerous. Proceed with extreme prejudice.</value>
+    <value>Be advised, we have relayed information about suspect. Suspect is identified as {0}, born {1} in Northwood, Algonquin. Three others are unknown at this time and are considered armed and dangerous. Proceed with extreme prejudice.</value>
   </data>
   <data name="TEXT_INFO_RELAY_SV_NIKO" xml:space="preserve">
     <value>This is officer {0}, we are in contact with suspects! Suspect is carrying a rocket launcher! Requesting backup!</value>

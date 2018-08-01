@@ -16,9 +16,10 @@ namespace SuperVillains.Callouts
     /// <summary>
     /// Callout that calls the main GTA protagonist: Niko Bellic, with two friends and a rocket launcher.
     /// </summary>
-    [CalloutInfo("SVNiko", ECalloutProbability.Low)]
+    [CalloutInfo("SVNiko", ECalloutProbability.VeryLow)]
     internal class SVNiko : Callout
     {
+        #region Initialization
         /// <summary>
         /// The blip of the position.
         /// </summary>
@@ -43,6 +44,12 @@ namespace SuperVillains.Callouts
         /// Checks whether the officer is called in the callout, that is, an officer is requesting assistance.
         /// </summary>
         private bool isOfficerCalledIn = new Boolean();
+
+        /// <summary>
+        /// A number of GTA peds for process method.
+        /// </summary>
+        private Ped[] peds;
+        #endregion
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Shootout"/> class.
@@ -148,7 +155,7 @@ namespace SuperVillains.Callouts
                         Functions.PlaySoundUsingPosition(audioMessage + crimeMessage + " IN_OR_ON_POSITION", this.spawnPoint.Position);
                         break;
                     case 1:
-                        Functions.PlaySoundUsingPosition("ATTENTION_ALL_UNITS INS_I_NEED_A_UNIT_FOR CRIM_POSSIBLE_TERRORIST_ACTIVITY IN_OR_ON_POSITION", this.spawnPoint.Position); break;
+                        Functions.PlaySoundUsingPosition("ATTENTION_ALL_UNITS INS_I_NEED_A_UNIT_FOR CRIM_POSSIBLE_TERRORIST_ACTIVITY IN_OR_ON_POSITION PLEASE_INVESTIGATE", this.spawnPoint.Position); break;
                     case 2:
                         Functions.PlaySoundUsingPosition("THIS_IS_CONTROL UNITS_PLEASE_BE_ADVISED INS_WE_HAVE_A_REPORT_OF_ERRR CRIM_TERRORIST_ACTIVITY IN_OR_ON_POSITION", this.spawnPoint.Position); break;
                 }
@@ -192,11 +199,11 @@ namespace SuperVillains.Callouts
                     criminal1.Weapons.RocketLauncher.Ammo = 100;
                     criminal1.Weapons.DesertEagle.Ammo = 999;
                     criminal1.Weapons.BaseballBat.Ammo = 1;
+                    criminal1.DefaultWeapon = Weapon.Heavy_RocketLauncher;
                     criminal1.Weapons.RocketLauncher.Select();
-                    criminal1.CanSwitchWeapons = false;
                     criminal1.MaxHealth = 400;
                     criminal1.Health = 400;
-                    criminal1.PersonaData = new PersonaData(new DateTime(1978, 06, 15), 10, "Niko", "Bellic", false, 8, true);
+                    criminal1.PersonaData = new PersonaData(new DateTime(1978, 6, 15), 10, "Niko", "Bellic", false, 8, true);
                     criminal1.ComplianceChance = Common.GetRandomValue(0, 60);
 
                     // Make default of the ped's component variation
@@ -208,28 +215,29 @@ namespace SuperVillains.Callouts
                     criminal2.Weapons.AssaultRifle_AK47.Ammo = 999;
                     criminal2.Weapons.Glock.Ammo = 999;
                     criminal2.Weapons.Knife.Ammo = 1;
+                    criminal2.DefaultWeapon = Weapon.Rifle_AK47;
                     criminal2.Weapons.AssaultRifle_AK47.Select();
-                    criminal2.CanSwitchWeapons = false;
                     criminal2.MaxHealth = 300;
                     criminal2.Health = 300;
-                    criminal2.PersonaData = new PersonaData(new DateTime(1981, 04, 22), 4, "\"Little\" Jacob", "Hughes", true, 3, true);
+                    criminal2.PersonaData = new PersonaData(new DateTime(1981, 4, 22), 4, "\"Little\" Jacob", "Hughes", true, 3, true);
                     criminal2.ComplianceChance = Common.GetRandomValue(50, 100);
 
                     // Make default of the ped's component variation
                     Function.Call("SET_CHAR_DEFAULT_COMPONENT_VARIATION", new Parameter[] { criminal2.GPed });
 
-                    // Create Packie with a semi-auto sniper
+                    // Create Packie with a bolt-action sniper
                     LPed criminal3 = new LPed(this.spawnPoint.Position, "IG_PACKIE_MC", LPed.EPedGroup.Criminal);
                     criminal3.Weapons.RemoveAll();
                     criminal3.Weapons.SniperRifle_M40A1.Ammo = 999;
                     criminal3.Weapons.Glock.Ammo = 999;
                     criminal3.Weapons.Knife.Ammo = 1;
+                    //criminal3.DefaultWeapon = Weapon.Handgun_Glock;
+                    criminal3.DefaultWeapon = Weapon.SniperRifle_M40A1;
                     criminal3.Weapons.SniperRifle_M40A1.Select();
-                    criminal3.CanSwitchWeapons = false;
                     criminal3.MaxHealth = 300;
                     criminal3.Health = 300;
                     criminal3.Armor = 50;
-                    criminal3.PersonaData = new PersonaData(new DateTime(1979, 08, 13), 10, "Patrick \"Packie\"", "McReary", true, 5, true);
+                    criminal3.PersonaData = new PersonaData(new DateTime(1979, 8, 13), 10, "Patrick \"Packie\"", "McReary", true, 5, true);
                     criminal3.ComplianceChance = Common.GetRandomValue(75, 100);
 
                     // Make default of the ped's component variation
@@ -253,8 +261,60 @@ namespace SuperVillains.Callouts
                             criminal.CantBeDamagedByRelationshipGroup(RelationshipGroup.Criminal, base.OnCalloutAccepted());
 
                             Functions.AddPedToPursuit(this.pursuit, criminal);
+
+                            // Place near any street if a criminal is in a building
+                            if (!criminal.EnsurePedIsNotInBuilding(criminal.Position))
+                                criminal.Position = World.GetNextPositionOnStreet(this.spawnPoint.Position);
                         }
                     }
+
+                // Start fighting immediately if the officers on the field are calling the callout in
+                    if (isOfficerCalledIn)
+                    {
+                        Vector3 temp1 = World.GetNextPositionOnPavement(this.spawnPoint.Position);
+                        Vector3 temp2 = (temp1 + new Vector3(0.3f, 0.3f, 0)).ToGround();
+                        Vector3 temp3 = World.GetNextPositionOnStreet(this.spawnPoint.Position).Around((float)Common.GetRandomValue(5, 15));
+                        Vector3 temp4 = (temp1 + new Vector3(0.9f, 0.9f, 0)).ToGround();
+                        LPed[] cops = new LPed[]
+                        {
+                            new LPed(temp1, "M_M_FATCOP_01", LPed.EPedGroup.Cop),
+                            new LPed(temp2, "M_M_FATCOP_01", LPed.EPedGroup.Cop),
+                            new LPed(temp3, "M_M_FATCOP_01", LPed.EPedGroup.Cop),
+                            new LPed(temp4, "M_M_FATCOP_01", LPed.EPedGroup.Cop)
+                        };
+
+                        foreach (LPed cop in cops)
+                        {
+                            Functions.AddToScriptDeletionList(cop, this);
+                            cop.Weapons.RemoveAll();
+                            cop.Weapons.DesertEagle.Ammo = 999;
+                            cop.Weapons.BarettaShotgun.Ammo = 999;
+                            cop.DefaultWeapon = Weapon.Shotgun_Baretta;
+                            cop.Weapons.BarettaShotgun.Select();
+
+                            Function.Call("SET_CHAR_RANDOM_COMPONENT_VARIATION", new Parameter[] { cop.GPed });
+                        }
+
+                        // Create cop cars
+                        Vehicle copcar1 = World.CreateVehicle(new Model("POLICE"), World.GetNextPositionOnStreet(temp4).ToGround());
+                        Vehicle copcar2 = World.CreateVehicle(new Model("POLICE"), copcar1.Position.Around(3.3f).ToGround());
+
+                        // Don't place it REALLY close to the terrorists
+                        if ((copcar1.Position - criminal1.Position).Length() < 10f) copcar1.Position = World.GetNextPositionOnStreet(copcar1.Position + new Vector3(13, 15, 0)).ToGround();
+                        if ((copcar2.Position - criminal1.Position).Length() < 10f) copcar2.Position = World.GetNextPositionOnStreet(copcar2.Position.Around(4f) + new Vector3(13, 15, 0)).ToGround();
+
+                        // Release them as an ambient vehicle
+                        copcar1.NoLongerNeeded();
+                        copcar2.NoLongerNeeded();
+
+                        this.State = EShootoutState.Fighting;
+                        this.Engage();
+
+                        // Request one backup unit automatically
+                        Functions.RequestPoliceBackupAtPosition(LPlayer.LocalPlayer.Ped.Position);
+                        Functions.PlaySoundUsingPosition("DFROM_DISPATCH_2_UNITS_FROM POSITION", LPlayer.LocalPlayer.Ped.Position);
+                    }
+
                     isReady = true;
                 }
                 catch (Exception ex) { Log.Error("OnCalloutAccepted: Cannot create Pursuit instance: " + ex, this); isReady = false; }
@@ -280,6 +340,22 @@ namespace SuperVillains.Callouts
         public override void Process()
         {
             base.Process();
+            if (LPlayer.LocalPlayer.Ped.HasBeenDamagedBy(Weapon.Heavy_RocketLauncher))
+                LPlayer.LocalPlayer.Ped.ForceRagdoll(30000, false);
+            else if (LPlayer.LocalPlayer.Ped.HasBeenDamagedBy(Weapon.SniperRifle_M40A1))
+                LPlayer.LocalPlayer.Ped.ForceRagdoll(10000, true);
+
+            peds = World.GetAllPeds();
+            foreach (Ped ped in peds)
+            {
+                if (ped.isObjectValid())
+                {
+                    if (ped.HasBeenDamagedBy(Weapon.Heavy_RocketLauncher))
+                        ped.ForceRagdoll(30000, false);
+                    else if (ped.HasBeenDamagedBy(Weapon.SniperRifle_M40A1))
+                        ped.ForceRagdoll(10000, true);
+                }
+            }
         }
 
         /// <summary>
@@ -289,8 +365,6 @@ namespace SuperVillains.Callouts
         public override void End()
         {
             base.End();
-            int salary = 10000;
-
             this.State = EShootoutState.None;
 
             if (this.blip != null && this.blip.Exists())
@@ -302,12 +376,10 @@ namespace SuperVillains.Callouts
             {
                 Functions.ForceEndPursuit(this.pursuit);
             }
-
-            if (!this.IsPrankCall)
+            
+            foreach (Ped ped in peds) // Release the peds from script control
             {
-                Functions.AddTextToTextwall(Functions.GetStringFromLanguageFile("CALLOUT_SHOOTOUT_END_TW"), Functions.GetStringFromLanguageFile("POLICE_SCANNER_CONTROL"));
-                Functions.PrintText(string.Format(Resources.CALLOUT_SV_BONUS_SALARY, salary), 8000);
-                LPlayer.LocalPlayer.Money += salary;
+                if (ped.isObjectValid()) ped.NoLongerNeeded();
             }
         }
 
@@ -323,6 +395,8 @@ namespace SuperVillains.Callouts
                     foreach (LPed criminal in this.criminals)
                     {
                         criminal.Task.WanderAround();
+                        criminal.StartKillingSpree(true);
+                        criminal.Task.FightAgainstHatedTargets(criminal.RangeToDetectEnemies);
                     }
                 }
 
@@ -348,18 +422,7 @@ namespace SuperVillains.Callouts
 
             if (this.IsPrankCall)
             {
-                DelayedCaller.Call(
-                    delegate
-                    {
-                        // Tell control it was a prank
-                        Functions.PlaySound("EMERG_PRANK_CALL", true, false);
-                        Functions.PrintText(Functions.GetStringFromLanguageFile("CALLOUT_SHOOTOUT_PRANK_END"), 5000);
-                        Functions.AddTextToTextwall(Functions.GetStringFromLanguageFile("CALLOUT_SHOOTOUT_PRANK_END_TW"), Functions.GetStringFromLanguageFile("POLICE_SCANNER_CONTROL"));
-                        this.End();
-                    },
-                    this,
-                    10000);
-
+                DelayedCaller.Call(ReportControl_IsPrank, this, 10000);
                 this.State = EShootoutState.Prank;
             }
             else
@@ -370,7 +433,8 @@ namespace SuperVillains.Callouts
                 // Check whether player has been spotted
                 foreach (LPed criminal in this.criminals)
                 {
-                    if (criminal.Exists())
+                    //if (criminal.Exists())
+                    if (criminal.isObjectValid())
                     {
                         if (criminal.HasSpottedPed(LPlayer.LocalPlayer.Ped, false))
                         {
@@ -385,10 +449,26 @@ namespace SuperVillains.Callouts
                 {
                     this.State = EShootoutState.Fighting;
                     this.Engage();
+                    this.Player_Yell();
 
                     Functions.PrintText(Functions.GetStringFromLanguageFile("CALLOUT_SHOOTOUT_FIGHT_SUSPECTS"), 5000);
                 }
             }
+        }
+
+        /// <summary>
+        /// Alternate delegate method that tells the player to control/dispatch that it was a prank call.
+        /// </summary>
+        /// <param name="parameter">Parameters</param>
+        private void ReportControl_IsPrank(params object[] parameter)
+        {
+            // Tell control it was a prank
+            Functions.PlaySound("EMERG_PRANK_CALL", true, false);
+            Functions.PrintText(Functions.GetStringFromLanguageFile("CALLOUT_SHOOTOUT_PRANK_END"), 5000);
+            Functions.AddTextToTextwall(Functions.GetStringFromLanguageFile("CALLOUT_SHOOTOUT_PRANK_END_TW"), Functions.GetStringFromLanguageFile("POLICE_SCANNER_CONTROL"));
+            this.End();
+            // This is a small demo if you are building the callout script from the scratch and don't know how to use a delegate method, although simple by design (you just need to put functions in there)
+            // Note that delegate method only works on some functions like DelayedCaller.Call and other compatible methods
         }
 
         /// <summary>
@@ -402,8 +482,7 @@ namespace SuperVillains.Callouts
                 {
                     // Enable chase AI and extend sense range so suspects won't flee immediately but fight longer
                     criminal.DisablePursuitAI = false;
-                    criminal.RangeToDetectEnemies = 80f;
-                    criminal.CanSwitchWeapons = true;
+                    criminal.RangeToDetectEnemies = 80f*2;
                 }
             }
 
@@ -411,8 +490,22 @@ namespace SuperVillains.Callouts
             Functions.SetPursuitDontEnableCopBlips(this.pursuit, false);
             Functions.SetPursuitAllowWeaponsForSuspects(this.pursuit, true);
             Functions.SetPursuitForceSuspectsToFight(this.pursuit, true);
-            Functions.SetPursuitIsActiveDelayed(this.pursuit, 2500, 5000);
 
+            if (isOfficerCalledIn)
+            {
+                Functions.SetPursuitIsActiveDelayed(this.pursuit, 0, Common.GetRandomValue(1000, 5000));
+                Functions.SetPursuitTactics(this.pursuit, true);
+                Functions.SetPursuitHelicopterTactics(this.pursuit, true);
+                Functions.SetPursuitMaximumUnits(this.pursuit, 40, 40);
+            }
+            else Functions.SetPursuitIsActiveDelayed(this.pursuit, 2500, 5000);
+        }
+
+        /// <summary>
+        /// Reports player to Control to confirm in contact with suspect.
+        /// </summary>
+        private void Player_Yell()
+        {
             // Request two police backups if the player is not a SWAT/FIB member
             if (LPlayer.LocalPlayer.Model != new Model("M_Y_SWAT") && LPlayer.LocalPlayer.Model != new Model("M_M_FBI"))
             {
@@ -421,26 +514,32 @@ namespace SuperVillains.Callouts
                 //LPlayer.LocalPlayer.Ped.SayAmbientSpeech("REQUEST_BACKUP");
                 Functions.PlaySound("REQUEST_BACKUP", true, false);
 
-                Game.WaitInCurrentScript(1000);
-                Functions.RequestPoliceBackupAtPosition(LPlayer.LocalPlayer.Ped.Position);
-                Functions.RequestPoliceBackupAtPosition(LPlayer.LocalPlayer.Ped.Position);
-                Functions.PlaySoundUsingPosition("THIS_IS_CONTROL INS_ALL_HANDS_TO CRIM_AN_OFFICER_IN_DANGER_OF_FIREARM_DISCHARGE_FROM_SUSPECT IN_OR_ON_POSITION SUSPECT ARMED_AND_DANGEROUS ALL_UNITS_PLEASE_RESPOND", this.spawnPoint.Position);
+                DelayedCaller.Call(delegate
+                {
+                    Functions.RequestPoliceBackupAtPosition(LPlayer.LocalPlayer.Ped.Position);
+                    Functions.RequestPoliceBackupAtPosition(LPlayer.LocalPlayer.Ped.Position);
+                    Functions.PlaySoundUsingPosition("THIS_IS_CONTROL INS_ALL_HANDS_TO CRIM_AN_OFFICER_IN_DANGER_OF_FIREARM_DISCHARGE_FROM_SUSPECT IN_OR_ON_POSITION SUSPECT ARMED_AND_DANGEROUS ALL_UNITS_PLEASE_RESPOND", this.spawnPoint.Position);
+                }, this, 3000);
             }
             else if (LPlayer.LocalPlayer.Model == new Model("M_Y_SWAT") || LPlayer.LocalPlayer.Model == new Model("M_M_FBI"))
             {
                 Functions.AddTextToTextwall(string.Format(Resources.TEXT_INFO_RELAY_SV_NIKO_SWAT, LPlayer.LocalPlayer.Username, criminals[0].PersonaData.FullName), Functions.GetStringFromLanguageFile("POLICE_SCANNER_OFFICER") + " " + LPlayer.LocalPlayer.Username);
                 LPlayer.LocalPlayer.Ped.SayAmbientSpeech("FIGHT");
 
-                Game.WaitInCurrentScript(1000);
-                Functions.PlaySoundUsingPosition(Functions.CreateRandomAudioIntroString(EIntroReportedBy.Officers) + "CRIM_TERRORIST_ACTIVITY IN_OR_ON_POSITION", this.spawnPoint.Position);
+                DelayedCaller.Call(delegate
+                {
+                    Functions.PlaySoundUsingPosition(Functions.CreateRandomAudioIntroString(EIntroReportedBy.Officers) + "CRIM_TERRORIST_ACTIVITY IN_OR_ON_POSITION", this.spawnPoint.Position);
+                }, this, 2000);
             }
             else
             {
                 Functions.AddTextToTextwall(string.Format(Resources.TEXT_INFO_RELAY_SV_NIKO_SWAT, LPlayer.LocalPlayer.Username, criminals[0].PersonaData.FullName), Functions.GetStringFromLanguageFile("POLICE_SCANNER_OFFICER") + " " + LPlayer.LocalPlayer.Username);
                 LPlayer.LocalPlayer.Ped.SayAmbientSpeech("TARGET");
 
-                Game.WaitInCurrentScript(1000);
-                Functions.PlaySoundUsingPosition(Functions.CreateRandomAudioIntroString(EIntroReportedBy.Officers) + "CRIM_TERRORIST_ACTIVITY IN_OR_ON_POSITION", this.spawnPoint.Position);
+                DelayedCaller.Call(delegate
+                {
+                    Functions.PlaySoundUsingPosition(Functions.CreateRandomAudioIntroString(EIntroReportedBy.Officers) + "CRIM_TERRORIST_ACTIVITY IN_OR_ON_POSITION", this.spawnPoint.Position);
+                }, this, 2000);
             }
         }
 
@@ -451,7 +550,11 @@ namespace SuperVillains.Callouts
         {
             if (!Functions.IsPursuitStillRunning(this.pursuit))
             {
+                int salary = 10000;
                 this.SetCalloutFinished(true, true, true);
+                Functions.AddTextToTextwall(Functions.GetStringFromLanguageFile("CALLOUT_SHOOTOUT_END_TW"), Functions.GetStringFromLanguageFile("POLICE_SCANNER_CONTROL"));
+                Functions.PrintText(string.Format(Resources.CALLOUT_SV_BONUS_SALARY, salary), 8000);
+                LPlayer.LocalPlayer.Money += salary;
                 this.End();
             }
         }
@@ -461,6 +564,7 @@ namespace SuperVillains.Callouts
         /// </summary>
         private void Prank()
         {
+            // TODO: Set a nearest ped on the street as a prank caller - easily identified by someone continuously talking on the phone
         }
 
         /// <summary>

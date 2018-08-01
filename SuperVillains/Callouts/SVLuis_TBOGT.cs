@@ -22,7 +22,7 @@ namespace SuperVillains.Callouts
         /// <summary>
         /// Vehicle models that can be used.
         /// </summary>
-        private string[] vehicleModels = new string[] { "BURRITO", "BURRITO2", "SPEEDO", "AMBULANCE", "CAVALCADE2", "AVAN" };
+        private string[] vehicleModels = new string[] { "BURRITO", "BURRITO2", "SPEEDO", "AMBULANCE", "CAVALCADE2", "AVAN", "STOCKADE", "POLICE", "POLICE2" };
 
         /// <summary>
         /// The pursuit.
@@ -47,7 +47,7 @@ namespace SuperVillains.Callouts
         /// <summary>
         /// Hash value of FIB Ped model
         /// </summary>
-        private static UInt32 fib_model_int = 3295460374;
+        private static UInt32 fib_model_int = 0xC46CBC16; //3295460374
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SVLuis_TBOGT"/> class.
@@ -97,6 +97,7 @@ namespace SuperVillains.Callouts
         public override bool OnCalloutAccepted()
         {
             bool isReady = base.OnCalloutAccepted();
+            bool isLuisCarryingDrugs = new Boolean();
 
             // Create pursuit instance
             this.pursuit = Functions.CreatePursuit();
@@ -105,6 +106,17 @@ namespace SuperVillains.Callouts
             try
             {
                 this.vehicle = new LVehicle(World.GetNextPositionOnStreet(this.spawnPosition), Common.GetRandomCollectionValue<string>(this.vehicleModels));
+
+                /*try
+                {
+                    if (vehicle.Model.ModelInfo.ModelFlags.HasFlag(EModelFlags.IsEmergencyServicesVehicle) || vehicle.Model.ModelInfo.ModelFlags.HasFlag(EModelFlags.IsCopCar)) vehicle.SirenActive = true;
+                }
+                catch (ArgumentException ex)
+                {
+                    Log.Warning("Unknown model flag contained on model: " + vehicle.ToString() + ", treated it as a civilian vehicle", this);
+                    Log.Warning(ex.ToString(), this);
+                }*/
+
                 if (this.vehicle.isObjectValid())
                 {
                     // Ensure vehicle is freed on end
@@ -112,25 +124,38 @@ namespace SuperVillains.Callouts
                     this.vehicle.PlaceOnNextStreetProperly();
 
                     // Create suspects
-                    this.criminals = new LPed[3]
+                    this.criminals = new LPed[4]
                     {
-                        vehicle.CreatePedOnSeat(VehicleSeat.Driver,new CModel(new Model("IG_LUIS2")),RelationshipGroup.Criminal),
-                        vehicle.CreatePedOnSeat(VehicleSeat.Driver,new CModel(new Model("IG_ARMANDO")),RelationshipGroup.Criminal),
-                        vehicle.CreatePedOnSeat(VehicleSeat.Driver,new CModel(new Model("IG_HENRIQUE")),RelationshipGroup.Criminal)
+                        vehicle.CreatePedOnSeat(VehicleSeat.Driver, new CModel(new Model("IG_LUIS2")), RelationshipGroup.Special),
+                        vehicle.CreatePedOnSeat(VehicleSeat.LeftRear, new CModel(new Model("IG_ARMANDO")), RelationshipGroup.Special),
+                        vehicle.CreatePedOnSeat(VehicleSeat.RightRear, new CModel(new Model("IG_HENRIQUE")), RelationshipGroup.Special),
+                        vehicle.CreatePedOnSeat(VehicleSeat.RightFront, CModel.GetRandomModel(EModelFlags.IsWealthUpperClass), RelationshipGroup.Criminal),
                     };
 
                     // Allow suspects to use custom Persona Data specific to protagonist characters
-                    criminals[0].PersonaData = new PersonaData(new DateTime(1983, 8, 17), 13, "Luis Fernando", "Lopez", true, 8, true);
+                    criminals[0].PersonaData = new PersonaData(new DateTime(1983, 8, 17, 0, 25, 0, DateTimeKind.Utc), 13, "Luis Fernando", "Lopez", true, 8, true);
+                    //criminals[0].BecomeMissionCharacter();
 
                     if (Common.GetRandomBool(0, 3, 1))
                     {
                         criminals[0].Money = 5000;
                         criminals[0].ItemsCarried = LPed.EPedItem.Drugs;
+                        isLuisCarryingDrugs = true;
                     }
                     else criminals[0].Money = 0;
 
                     criminals[1].PersonaData = new PersonaData(new DateTime(1981, 6, 20), 4, "Armando", "", true, 0, true);
+                    //criminals[1].BecomeMissionCharacter();
                     criminals[2].PersonaData = new PersonaData(new DateTime(1982, 9, 29), 4, "Henrique", "", true, 3, true);
+                    //criminals[2].BecomeMissionCharacter();
+
+                    if (isLuisCarryingDrugs == false)
+                    {
+                        criminals[3].Money = 1000;
+                        if (Common.GetRandomBool(0, 3, 1))
+                            criminals[3].ItemsCarried = LPed.EPedItem.Drugs;
+                        else criminals[3].ItemsCarried = LPed.EPedItem.StolenCards;
+                    }
 
                     for (int i = 0; i < this.criminals.Length; i++)
                     {
@@ -141,14 +166,20 @@ namespace SuperVillains.Callouts
                         // Give specified weapons
                         //criminals[i].ItemsCarried = LPed.EPedItem.Weapons;
                         criminals[i].Weapons.RemoveAll();
-                        criminals[i].Weapons.FromType(Weapon.TBOGT_Pistol44).Ammo = 9999;
-                        criminals[i].Weapons.FromType(Weapon.TBOGT_GoldenSMG).Ammo = 320;
                         criminals[i].Weapons.FromType(Weapon.Melee_Knife).Ammo = 999;
+                        criminals[i].Weapons.FromType(Weapon.TBOGT_Pistol44).Ammo = 9999;
+                        criminals[i].DefaultWeapon = Weapon.TBOGT_Pistol44;
+                        criminals[i].Weapons.FromType(Weapon.TBOGT_GoldenSMG).Ammo = 320;
                         criminals[i].Weapons.FromType(Weapon.TBOGT_AdvancedMG).Ammo = 400;
                         criminals[i].Weapons.Select(Weapon.TBOGT_AdvancedMG);
                         criminals[i].WillDoDrivebys = true;
+                        criminals[i].ChangeRelationship(RelationshipGroup.Cop, Relationship.Hate);
+                        criminals[i].ChangeRelationship(RelationshipGroup.Special, Relationship.Companion);
+                        criminals[i].ChangeRelationship(RelationshipGroup.Criminal, Relationship.Companion);
                         criminals[i].CantBeDamagedByRelationshipGroup(RelationshipGroup.Criminal, base.OnCalloutAccepted());
+                        criminals[i].CantBeDamagedByRelationshipGroup(RelationshipGroup.Special, base.OnCalloutAccepted());
                         criminals[i].ComplianceChance = Common.GetRandomValue(0, 75);
+                        criminals[i].AlwaysDiesOnLowHealth = true;
 
                         // Make default of the ped's component variation
                         Function.Call("SET_CHAR_DEFAULT_COMPONENT_VARIATION", new Parameter[] { criminals[i].GPed });
@@ -196,6 +227,8 @@ namespace SuperVillains.Callouts
                             fib.Weapons.FromType(Weapon.TBOGT_AssaultSMG).Ammo = 999;
                             fib.Weapons.FromType(Weapon.Rifle_M4).Ammo = 999;
                             fib.Weapons.Select(Weapon.Rifle_M4);
+                            fib.DefaultWeapon = Weapon.Rifle_M4;
+                            fib.WillDoDrivebys = true;
                         }
                     }
 
@@ -209,6 +242,8 @@ namespace SuperVillains.Callouts
                             fib.Weapons.FromType(Weapon.SMG_MP5).Ammo = 999;
                             fib.Weapons.FromType(Weapon.Shotgun_Basic).Ammo = 999;
                             fib.Weapons.Select(Weapon.SMG_MP5);
+                            fib.DefaultWeapon = Weapon.SMG_MP5;
+                            fib.WillDoDrivebys = true;
                         }
                     }
                 }
@@ -216,10 +251,12 @@ namespace SuperVillains.Callouts
                 // Since we want other cops to join, set as called in already and also active it for player
                 Functions.SetPursuitCalledIn(this.pursuit, true);
                 Functions.SetPursuitIsActiveForPlayer(this.pursuit, true);
+                Functions.SetPursuitTactics(this.pursuit, true);
 
                 // Show message to the player
                 Functions.PrintText(Functions.GetStringFromLanguageFile("CALLOUT_ROBBERY_CATCH_UP"), 25000);
-                Functions.AddTextToTextwall(string.Format(Resources.TEXT_INFO_RELAY_SV_LUIS, criminals[0].PersonaData.FullName, criminals[0].PersonaData.BirthDay));
+                Functions.AddTextToTextwall(string.Format(Resources.TEXT_INFO_RELAY_SV_LUIS, criminals[0].PersonaData.FullName, criminals[0].PersonaData.BirthDay),
+                    Functions.GetStringFromLanguageFile("POLICE_SCANNER_CONTROL"));
                 isReady = true;
             }
             catch (Exception ex) { Log.Error("OnCalloutAccepted: Cannot create Pursuit instance: " + ex, this); isReady = false; }
@@ -234,11 +271,14 @@ namespace SuperVillains.Callouts
         {
             base.Process();
 
-            // Print text message when all suspect have been arrested
-            int arrestCount = this.criminals.Count(criminal => criminal.Exists() && criminal.HasBeenArrested);
+            // Print text message and reward the player money when all suspect have been arrested
+            int arrestCount = this.criminals.Count(criminal => criminal.isObjectValid() && criminal.HasBeenArrested);
             if (arrestCount == this.criminals.Length)
             {
+                int salary = 8000;
                 //Functions.PrintText("All arrested!", 5000);
+                Functions.PrintText(string.Format(Resources.CALLOUT_SV_BONUS_ARREST_SALARY, salary), 8000);
+                LPlayer.LocalPlayer.Money += salary;
                 this.SetCalloutFinished(true, true, true);
                 this.End();
             }
@@ -246,6 +286,13 @@ namespace SuperVillains.Callouts
             // End this script is pursuit is no longer running, e.g. because all suspects are dead
             if (!Functions.IsPursuitStillRunning(this.pursuit))
             {
+                // Only award the player cash if not all suspects are arrested
+                if (arrestCount == this.criminals.Length == false)
+                {
+                    int salary = 5000;
+                    Functions.PrintText(string.Format(Resources.CALLOUT_SV_BONUS_SALARY, salary), 8000);
+                    LPlayer.LocalPlayer.Money += salary;
+                }
                 this.SetCalloutFinished(true, true, true);
                 this.End();
             }
@@ -258,17 +305,12 @@ namespace SuperVillains.Callouts
         public override void End()
         {
             base.End();
-            int salary = 8000;
 
             // End pursuit if still running
             if (this.pursuit != null)
             {
                 Functions.ForceEndPursuit(this.pursuit);
             }
-
-            // Issue: You will gain salary even though you lost the suspect during the chase
-            Functions.PrintText(string.Format(Resources.CALLOUT_SV_BONUS_SALARY, salary), 8000);
-            LPlayer.LocalPlayer.Money += salary;
         }
 
         /// <summary>

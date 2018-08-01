@@ -113,7 +113,7 @@ namespace SuperVillains.Callouts
 
                     // Create Luis
                     luis = vehicle.CreatePedOnSeat(VehicleSeat.Driver, new CModel(new Model("IG_LUIS")), RelationshipGroup.Criminal);
-                    luis.PersonaData = new PersonaData(new DateTime(1983, 08, 17), 13, "Luis Fernando", "Lopez", true, 8, true);
+                    luis.PersonaData = new PersonaData(new DateTime(1983, 8, 17, 0, 25, 0, DateTimeKind.Utc), 13, "Luis Fernando", "Lopez", true, 8, true);
                     luis.Money = 500;
 
                     // Make ignore all events
@@ -123,6 +123,7 @@ namespace SuperVillains.Callouts
                     // Give specified weapons
                     luis.Weapons.RemoveAll();
                     luis.Weapons.DesertEagle.Ammo = 999;
+                    luis.DefaultWeapon = Weapon.Handgun_DesertEagle;
                     luis.Weapons.AssaultRifle_M4.Ammo = 300;
                     luis.Weapons.AssaultRifle_M4.Select();
                     luis.ComplianceChance = Common.GetRandomValue(40, 80);
@@ -161,6 +162,7 @@ namespace SuperVillains.Callouts
                             fib.Weapons.FromType(Weapon.SMG_MP5).Ammo = 999;
                             fib.Weapons.FromType(Weapon.Rifle_M4).Ammo = 999;
                             fib.Weapons.Select(Weapon.Rifle_M4);
+                            fib.DefaultWeapon = Weapon.Rifle_M4;
                         }
                     }
                 }
@@ -214,7 +216,6 @@ namespace SuperVillains.Callouts
                 Functions.ForceEndPursuit(this.pursuit);
             }
 
-            // Issue: You will gain salary even though you lost the suspect during the chase
             Functions.PrintText(string.Format(Resources.CALLOUT_SV_BONUS_SALARY, salary), 8000);
             LPlayer.LocalPlayer.Money += salary;
         }
