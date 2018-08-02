@@ -68,7 +68,7 @@ namespace SuperVillains.Callouts
             switch (rand)
             {
                 case 0:
-                    Functions.PlaySoundUsingPosition("UNITS_PLEASE_BE_ADVISED INS_ALL_HANDS_TO CRIM_A_CIVILIAN_CAUSING_TROUBLE IN_OR_ON_POSITION", this.spawnPosition); break;
+                    Functions.PlaySoundUsingPosition("INS_THIS_IS_CONTROL_I_NEED_ASSISTANCE_FOR CRIM_A_CIVILIAN_CAUSING_TROUBLE IN_OR_ON_POSITION", this.spawnPosition); break;
                 case 1:
                     Functions.PlaySoundUsingPosition("ALL_UNITS_ALL_UNITS ASSISTANCE_REQUIRED IN_OR_ON_POSITION FOR CRIM_A_CIVIL_DISTURBANCE", this.spawnPosition); break;
                 case 2:

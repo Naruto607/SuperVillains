@@ -45,14 +45,15 @@ namespace SuperVillains.Callouts
         /// </summary>
         private bool isOfficerCalledIn = new Boolean();
 
+        /*
         /// <summary>
         /// A number of GTA peds for process method.
         /// </summary>
-        private Ped[] peds;
+        private Ped[] peds;*/
         #endregion
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Shootout"/> class.
+        /// Initializes a new instance of the <see cref="SVNiko"/> class.
         /// </summary>
         public SVNiko()
         {
@@ -252,6 +253,7 @@ namespace SuperVillains.Callouts
                         {
                             Functions.AddToScriptDeletionList(criminal, this);
                             Functions.SetPedIsOwnedByScript(criminal, this, true);
+                            criminal.BecomeMissionCharacter();
                             criminal.RelationshipGroup = RelationshipGroup.Criminal;
                             criminal.ChangeRelationship(RelationshipGroup.Criminal, Relationship.Companion);
                             criminal.ChangeRelationship(RelationshipGroup.Cop, Relationship.Hate);
@@ -264,7 +266,7 @@ namespace SuperVillains.Callouts
 
                             // Place near any street if a criminal is in a building
                             if (!criminal.EnsurePedIsNotInBuilding(criminal.Position))
-                                criminal.Position = World.GetNextPositionOnStreet(this.spawnPoint.Position);
+                                criminal.Position = World.GetNextPositionOnStreet(this.spawnPoint.Position).ToGround();
                         }
                     }
 
@@ -340,7 +342,10 @@ namespace SuperVillains.Callouts
         public override void Process()
         {
             base.Process();
-            if (LPlayer.LocalPlayer.Ped.HasBeenDamagedBy(Weapon.Heavy_RocketLauncher))
+
+            // Dunno if this works, but apparently explosions can ragdoll peds automatically when caught in the blast
+            // This is a system based on the original SuperVillains by OfficerLenny (SVJohnny)
+            /*if (LPlayer.LocalPlayer.Ped.HasBeenDamagedBy(Weapon.Heavy_RocketLauncher))
                 LPlayer.LocalPlayer.Ped.ForceRagdoll(30000, false);
             else if (LPlayer.LocalPlayer.Ped.HasBeenDamagedBy(Weapon.SniperRifle_M40A1))
                 LPlayer.LocalPlayer.Ped.ForceRagdoll(10000, true);
@@ -355,7 +360,8 @@ namespace SuperVillains.Callouts
                     else if (ped.HasBeenDamagedBy(Weapon.SniperRifle_M40A1))
                         ped.ForceRagdoll(10000, true);
                 }
-            }
+            }*/
+
         }
 
         /// <summary>
@@ -377,10 +383,10 @@ namespace SuperVillains.Callouts
                 Functions.ForceEndPursuit(this.pursuit);
             }
             
-            foreach (Ped ped in peds) // Release the peds from script control
+            /*foreach (Ped ped in peds) // Release the peds from script control
             {
                 if (ped.isObjectValid()) ped.NoLongerNeeded();
-            }
+            }*/
         }
 
         /// <summary>
@@ -507,19 +513,19 @@ namespace SuperVillains.Callouts
         private void Player_Yell()
         {
             // Request two police backups if the player is not a SWAT/FIB member
-            if (LPlayer.LocalPlayer.Model != new Model("M_Y_SWAT") && LPlayer.LocalPlayer.Model != new Model("M_M_FBI"))
+            if (LPlayer.LocalPlayer.Model == new Model("M_Y_COP") || LPlayer.LocalPlayer.Model == new Model("M_M_FATCOP_01") || LPlayer.LocalPlayer.Model == new Model("M_Y_STROOPER") || LPlayer.LocalPlayer.Model == new Model("M_Y_COP_TRAFFIC"))
             {
-
                 Functions.AddTextToTextwall(string.Format(Resources.TEXT_INFO_RELAY_SV_NIKO, LPlayer.LocalPlayer.Username), Functions.GetStringFromLanguageFile("POLICE_SCANNER_OFFICER") + " " + LPlayer.LocalPlayer.Username);
                 //LPlayer.LocalPlayer.Ped.SayAmbientSpeech("REQUEST_BACKUP");
                 Functions.PlaySound("REQUEST_BACKUP", true, false);
 
                 DelayedCaller.Call(delegate
                 {
+                    Functions.AddTextToTextwall(Functions.GetStringFromLanguageFile("CALLOUT_ROGER_THAT"), Functions.GetStringFromLanguageFile("POLICE_SCANNER_CONTROL"));
                     Functions.RequestPoliceBackupAtPosition(LPlayer.LocalPlayer.Ped.Position);
                     Functions.RequestPoliceBackupAtPosition(LPlayer.LocalPlayer.Ped.Position);
                     Functions.PlaySoundUsingPosition("THIS_IS_CONTROL INS_ALL_HANDS_TO CRIM_AN_OFFICER_IN_DANGER_OF_FIREARM_DISCHARGE_FROM_SUSPECT IN_OR_ON_POSITION SUSPECT ARMED_AND_DANGEROUS ALL_UNITS_PLEASE_RESPOND", this.spawnPoint.Position);
-                }, this, 3000);
+                }, this, 4000);
             }
             else if (LPlayer.LocalPlayer.Model == new Model("M_Y_SWAT") || LPlayer.LocalPlayer.Model == new Model("M_M_FBI"))
             {
@@ -528,18 +534,20 @@ namespace SuperVillains.Callouts
 
                 DelayedCaller.Call(delegate
                 {
+                    Functions.AddTextToTextwall(Functions.GetStringFromLanguageFile("CALLOUT_ROGER_THAT"), Functions.GetStringFromLanguageFile("POLICE_SCANNER_CONTROL"));
                     Functions.PlaySoundUsingPosition(Functions.CreateRandomAudioIntroString(EIntroReportedBy.Officers) + "CRIM_TERRORIST_ACTIVITY IN_OR_ON_POSITION", this.spawnPoint.Position);
-                }, this, 2000);
+                }, this, 4000);
             }
-            else
+            else // Special models like TLAD CIA models or a NOOSE Helicopter Pilot
             {
                 Functions.AddTextToTextwall(string.Format(Resources.TEXT_INFO_RELAY_SV_NIKO_SWAT, LPlayer.LocalPlayer.Username, criminals[0].PersonaData.FullName), Functions.GetStringFromLanguageFile("POLICE_SCANNER_OFFICER") + " " + LPlayer.LocalPlayer.Username);
                 LPlayer.LocalPlayer.Ped.SayAmbientSpeech("TARGET");
 
                 DelayedCaller.Call(delegate
                 {
+                    Functions.AddTextToTextwall(Functions.GetStringFromLanguageFile("CALLOUT_ROGER_THAT"), Functions.GetStringFromLanguageFile("POLICE_SCANNER_CONTROL"));
                     Functions.PlaySoundUsingPosition(Functions.CreateRandomAudioIntroString(EIntroReportedBy.Officers) + "CRIM_TERRORIST_ACTIVITY IN_OR_ON_POSITION", this.spawnPoint.Position);
-                }, this, 2000);
+                }, this, 4000);
             }
         }
 

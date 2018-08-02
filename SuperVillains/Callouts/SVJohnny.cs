@@ -55,7 +55,7 @@ namespace SuperVillains.Callouts
         private SpawnPoint spawnPoint;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Shootout"/> class.
+        /// Initializes a new instance of the <see cref="SVJohnny"/> class.
         /// </summary>
         public SVJohnny()
         {
@@ -426,7 +426,7 @@ namespace SuperVillains.Callouts
 
                     Functions.PrintText(Functions.GetStringFromLanguageFile("CALLOUT_SHOOTOUT_FIGHT_SUSPECTS"), 5000);
 
-                    if (LPlayer.LocalPlayer.Model != new Model("M_Y_SWAT") && LPlayer.LocalPlayer.Model != new Model("M_M_FBI"))
+                    if (LPlayer.LocalPlayer.Model == new Model("M_Y_COP") || LPlayer.LocalPlayer.Model == new Model("M_M_FATCOP_01") || LPlayer.LocalPlayer.Model == new Model("M_Y_STROOPER") || LPlayer.LocalPlayer.Model == new Model("M_Y_COP_TRAFFIC"))
                         LPlayer.LocalPlayer.Ped.SayAmbientSpeech("SPOT_SUSPECT");
                     else if (LPlayer.LocalPlayer.Model == new Model("M_Y_SWAT") || LPlayer.LocalPlayer.Model == new Model("M_M_FBI"))
                         LPlayer.LocalPlayer.Ped.SayAmbientSpeech("DRAW_GUN");

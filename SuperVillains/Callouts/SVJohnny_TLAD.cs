@@ -75,7 +75,7 @@ namespace SuperVillains.Callouts
         private bool isOfficerCalledIn = new Boolean();
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Shootout"/> class.
+        /// Initializes a new instance of the <see cref="SVJohnny_TLAD"/> class.
         /// </summary>
         public SVJohnny_TLAD()
         {
@@ -155,7 +155,7 @@ namespace SuperVillains.Callouts
                 {
                     case 0: Functions.PlaySoundUsingPosition("THIS_IS_CONTROL INS_ALL_HANDS_TO CRIM_A_FIREARM_ATTACK_ON_AN_OFFICER IN_OR_ON_POSITION", this.spawnPoint.Position);
                         break;
-                    case 1: Functions.PlaySoundUsingPosition("THIS_IS_CONTROL UNITS_PLEASE_BE_ADVISED INS_AVAILABLE_UNITS_RESPOND_TO CRIM_AN_OFFICER_ASSAULT IN_OR_ON_POSITION", this.spawnPoint.Position);
+                    case 1: Functions.PlaySoundUsingPosition("THIS_IS_CONTROL INS_AVAILABLE_UNITS_RESPOND_TO CRIM_AN_OFFICER_ASSAULT IN_OR_ON_POSITION", this.spawnPoint.Position);
                         break;
                     case 2:
                         string audioMessage = Functions.CreateRandomAudioIntroString(EIntroReportedBy.Officers);
@@ -388,14 +388,14 @@ namespace SuperVillains.Callouts
                         if (NGD.isObjectValid()) // derived from ValidityCheck - greetings to LtFlash
                         {
                             Functions.AddToScriptDeletionList(NGD, this);
-                            Functions.SetPedIsOwnedByScript(NGD, this, true);
+                            //Functions.SetPedIsOwnedByScript(NGD, this, true);
                             NGD.RelationshipGroup = RelationshipGroup.Cop;
                             NGD.ChangeRelationship(RelationshipGroup.Cop, Relationship.Companion);
                             NGD.ChangeRelationship(RelationshipGroup.Gang_Biker2, Relationship.Hate);
                             NGD.ChangeRelationship(RelationshipGroup.Special, Relationship.Hate);
 
                             // We don't want the personnel to flee yet
-                            NGD.DisablePursuitAI = true;
+                            //NGD.DisablePursuitAI = true;
 
                             NGD.Weapons.RemoveAll();
                             NGD.Weapons.Glock.Ammo = 999;
@@ -610,7 +610,7 @@ namespace SuperVillains.Callouts
         /// </summary>
         private void Player_Yell()
         {
-            if (LPlayer.LocalPlayer.Model != new Model("M_Y_SWAT") && LPlayer.LocalPlayer.Model != new Model("M_M_FBI"))
+            if (LPlayer.LocalPlayer.Model == new Model("M_Y_COP") || LPlayer.LocalPlayer.Model == new Model("M_M_FATCOP_01") || LPlayer.LocalPlayer.Model == new Model("M_Y_STROOPER") || LPlayer.LocalPlayer.Model == new Model("M_Y_COP_TRAFFIC"))
                 LPlayer.LocalPlayer.Ped.SayAmbientSpeech("SPOT_SUSPECT");
             else if (LPlayer.LocalPlayer.Model == new Model("M_Y_SWAT") || LPlayer.LocalPlayer.Model == new Model("M_M_FBI"))
                 LPlayer.LocalPlayer.Ped.SayAmbientSpeech("DRAW_GUN");

@@ -22,7 +22,7 @@ namespace SuperVillains.Callouts
         /// <summary>
         /// Vehicle models that can be used.
         /// </summary>
-        private string[] vehicleModels = new string[] { "BURRITO", "BURRITO2", "SPEEDO", "AMBULANCE", "CAVALCADE2", "AVAN", "STOCKADE", "POLICE", "POLICE2" };
+        private string[] vehicleModels = new string[] { "BURRITO", "BURRITO2", "SPEEDO", "AMBULANCE", "CAVALCADE2", "AVAN", "STOCKADE", "POLICE", "POLICE2", "POLICE3" };
 
         /// <summary>
         /// The pursuit.
@@ -134,7 +134,7 @@ namespace SuperVillains.Callouts
 
                     // Allow suspects to use custom Persona Data specific to protagonist characters
                     criminals[0].PersonaData = new PersonaData(new DateTime(1983, 8, 17, 0, 25, 0, DateTimeKind.Utc), 13, "Luis Fernando", "Lopez", true, 8, true);
-                    //criminals[0].BecomeMissionCharacter();
+                    criminals[0].BecomeMissionCharacter();
 
                     if (Common.GetRandomBool(0, 3, 1))
                     {
@@ -145,9 +145,9 @@ namespace SuperVillains.Callouts
                     else criminals[0].Money = 0;
 
                     criminals[1].PersonaData = new PersonaData(new DateTime(1981, 6, 20), 4, "Armando", "", true, 0, true);
-                    //criminals[1].BecomeMissionCharacter();
+                    criminals[1].BecomeMissionCharacter();
                     criminals[2].PersonaData = new PersonaData(new DateTime(1982, 9, 29), 4, "Henrique", "", true, 3, true);
-                    //criminals[2].BecomeMissionCharacter();
+                    criminals[2].BecomeMissionCharacter();
 
                     if (isLuisCarryingDrugs == false)
                     {
@@ -160,6 +160,8 @@ namespace SuperVillains.Callouts
                     for (int i = 0; i < this.criminals.Length; i++)
                     {
                         // Make ignore all events
+                        this.criminals[i].WillDoDrivebys = true;
+                        this.criminals[i].Task.FightAgainstHatedTargets(criminals[i].RangeToDetectEnemies);
                         this.criminals[i].BlockPermanentEvents = true;
                         this.criminals[i].Task.AlwaysKeepTask = true;
 
@@ -172,7 +174,6 @@ namespace SuperVillains.Callouts
                         criminals[i].Weapons.FromType(Weapon.TBOGT_GoldenSMG).Ammo = 320;
                         criminals[i].Weapons.FromType(Weapon.TBOGT_AdvancedMG).Ammo = 400;
                         criminals[i].Weapons.Select(Weapon.TBOGT_AdvancedMG);
-                        criminals[i].WillDoDrivebys = true;
                         criminals[i].ChangeRelationship(RelationshipGroup.Cop, Relationship.Hate);
                         criminals[i].ChangeRelationship(RelationshipGroup.Special, Relationship.Companion);
                         criminals[i].ChangeRelationship(RelationshipGroup.Criminal, Relationship.Companion);
@@ -251,6 +252,8 @@ namespace SuperVillains.Callouts
                 // Since we want other cops to join, set as called in already and also active it for player
                 Functions.SetPursuitCalledIn(this.pursuit, true);
                 Functions.SetPursuitIsActiveForPlayer(this.pursuit, true);
+                Functions.SetPursuitAllowWeaponsForSuspects(this.pursuit, true);
+                Functions.SetPursuitForceSuspectsToFight(this.pursuit, true);
                 Functions.SetPursuitTactics(this.pursuit, true);
 
                 // Show message to the player
