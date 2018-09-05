@@ -312,8 +312,16 @@ namespace SuperVillains.Callouts
                 this.RegisterStateCallback(EShootoutState.Fighting, this.InCombat);
                 this.RegisterStateCallback(EShootoutState.Prank, this.Prank);
                 this.State = EShootoutState.WaitingForPlayer;
-                Functions.AddTextToTextwall(string.Format(Resources.TEXT_INFO_RELAY_SV_JOHNNY, johnny.PersonaData.FullName, johnny.PersonaData.BirthDay),
-                    Functions.GetStringFromLanguageFile("POLICE_SCANNER_CONTROL"));
+                if (!this.IsPrankCall)
+                    Functions.AddTextToTextwall(string.Format(Resources.TEXT_INFO_RELAY_SV_JOHNNY, johnny.PersonaData.FullName, johnny.PersonaData.BirthDay),
+                        Functions.GetStringFromLanguageFile("POLICE_SCANNER_CONTROL"));
+                else DelayedCaller.Call(delegate
+                {
+                    Functions.AddTextToTextwall(Resources.TEXT_INFO_RELAY_SV_JOHNNY_PRANK, Functions.GetStringFromLanguageFile("POLICE_SCANNER_CONTROL"));
+                    // Request one backup unit automatically
+                    Functions.RequestPoliceBackupAtPosition(LPlayer.LocalPlayer.Ped.Position);
+                    Functions.PlaySoundUsingPosition("DFROM_DISPATCH_2_UNITS_FROM POSITION", LPlayer.LocalPlayer.Ped.Position);
+                }, this, Common.GetRandomValue(3000, 6001));
                 Functions.PrintText(Functions.GetStringFromLanguageFile("CALLOUT_GET_TO_CRIME_SCENE"), 8000);
             }
 

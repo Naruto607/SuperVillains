@@ -144,6 +144,9 @@
   <data name="TEXT_INFO_RELAY_SV_JOHNNY_MISSION_UPDATE" xml:space="preserve">
     <value>Task update, officer. Several NGD members are on site and being attacked by The Lost OMG members. They require immediate assistance, pronto!</value>
   </data>
+  <data name="TEXT_INFO_RELAY_SV_JOHNNY_PRANK" xml:space="preserve">
+    <value>The caller is said that suspects are attempting to leave the scene. We are dispatching a unit close to your position now.</value>
+  </data>
   <data name="TEXT_INFO_RELAY_SV_LUIS" xml:space="preserve">
     <value>Be advised, we have relayed information about suspect. Suspect is identified as {0}, born {1} in Northwood, Algonquin. Three others are unknown at this time and are considered armed and dangerous. Proceed with extreme prejudice.</value>
   </data>

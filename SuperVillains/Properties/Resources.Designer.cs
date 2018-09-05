@@ -142,6 +142,15 @@ namespace SuperVillains.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The caller is said that suspects are attempting to leave the scene. We are dispatching a unit close to your position now..
+        /// </summary>
+        internal static string TEXT_INFO_RELAY_SV_JOHNNY_PRANK {
+            get {
+                return ResourceManager.GetString("TEXT_INFO_RELAY_SV_JOHNNY_PRANK", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Be advised, we have relayed information about suspect. Suspect is identified as {0}, born {1} in Northwood, Algonquin. Three others are unknown at this time and are considered armed and dangerous. Proceed with extreme prejudice..
         /// </summary>
         internal static string TEXT_INFO_RELAY_SV_LUIS {

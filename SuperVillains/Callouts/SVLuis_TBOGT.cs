@@ -47,7 +47,7 @@ namespace SuperVillains.Callouts
         /// <summary>
         /// Hash value of FIB Ped model
         /// </summary>
-        private static UInt32 fib_model_int = 0xC46CBC16; //3295460374
+        private const UInt32 fib_model_int = 0xC46CBC16; //3295460374
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SVLuis_TBOGT"/> class.
@@ -74,8 +74,7 @@ namespace SuperVillains.Callouts
 
             // Set up message
             this.CalloutMessage = string.Format(Resources.CALLOUT_SV_LUIS_TBOGT_MSG, Functions.GetAreaStringFromPosition(this.spawnPosition));
-            //Functions.PlaySoundUsingPosition("INS_THIS_IS_CONTROL_WE_HAVE CRIM_AN_OFFICER_IN_NEED_OF_ASSISTANCE FOR CRIM_A_CRIMINAL_FLEEING_A_CRIME_SCENE IN_OR_ON_POSITION", this.spawnPosition);
-            int rand = Common.GetRandomValue(0, 2);
+            int rand = Common.GetRandomValue(0, 3);
 
             switch (rand)
             {
@@ -84,6 +83,9 @@ namespace SuperVillains.Callouts
                     break;
                 case 1:
                     Functions.PlaySoundUsingPosition("ALL_UNITS INS_WE_HAVE_A_REPORT_OF_ERRR CRIM_CRIMINALS_PERFORMING_DRIVEBY_ACTIVITY IN_OR_ON_POSITION", this.spawnPosition);
+                    break;
+                case 2:
+                    Functions.PlaySoundUsingPosition("UNITS_PLEASE_BE_ADVISED INS_ALL_HANDS_TO CRIM_AN_OFFICER_IN_NEED_OF_ASSISTANCE FOR CRIM_DANGEROUS_DRIVING IN_OR_ON_POSITION", this.spawnPosition);
                     break;
             }
         }

@@ -32,7 +32,7 @@ namespace SuperVillains.Callouts
         /// <summary>
         /// Northern Guardians Division personnel.
         /// </summary>
-        private List<LPed> NGD_Personnels;
+        private List<LPed> NGD_Personnels, officers;
 
         /// <summary>
         /// The criminal models.
@@ -55,6 +55,19 @@ namespace SuperVillains.Callouts
         };
 
         /// <summary>
+        /// Police officer models.
+        /// </summary>
+        private string[] copModel = new string[]
+        {
+            "M_M_FATCOP_01", "M_Y_COP", "M_Y_COP_TRAFFIC"
+        };
+
+        /// <summary>
+        /// State Police officer model.
+        /// </summary>
+        private const string stateTrooperModel = "M_Y_STROOPER";
+
+        /// <summary>
         /// Criminal leaders.
         /// </summary>
         private LPed johnny, clay, terry;
@@ -75,11 +88,17 @@ namespace SuperVillains.Callouts
         private bool isOfficerCalledIn = new Boolean();
 
         /// <summary>
+        /// Checks whether the NGD officer is called in the callout.
+        /// </summary>
+        private bool isNGDRequestingAssistance = new Boolean();
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="SVJohnny_TLAD"/> class.
         /// </summary>
         public SVJohnny_TLAD()
         {
             isOfficerCalledIn = Common.GetRandomBool(0, 5, 1);
+            isNGDRequestingAssistance = Common.GetRandomBool(0, 5, 1);
 
             //this.CalloutMessage = Functions.GetStringFromLanguageFile("CALLOUT_SHOOTOUT_MESSAGE");
             this.CalloutMessage = Resources.CALLOUT_SV_JOHNNY_MESSAGE;
@@ -145,19 +164,23 @@ namespace SuperVillains.Callouts
             // Get area name
             string area = Functions.GetAreaStringFromPosition(this.spawnPoint.Position);
             //this.CalloutMessage = string.Format(Functions.GetStringFromLanguageFile("CALLOUT_SHOOTOUT_MESSAGE"), area);
-            this.CalloutMessage = string.Format(Resources.CALLOUT_SV_JOHNNY_MESSAGE, area);
 
             // Play audio
-            if (isOfficerCalledIn)
+            if (isOfficerCalledIn || isNGDRequestingAssistance)
             {
                 int rand = Common.GetRandomValue(0, 3);
                 switch (rand)
                 {
-                    case 0: Functions.PlaySoundUsingPosition("THIS_IS_CONTROL INS_ALL_HANDS_TO CRIM_A_FIREARM_ATTACK_ON_AN_OFFICER IN_OR_ON_POSITION", this.spawnPoint.Position);
+                    case 0:
+                        this.CalloutMessage = string.Format(Functions.GetStringFromLanguageFile("POLICE_SCANNER_OFFICER_ATTACKED"), area);
+                        Functions.PlaySoundUsingPosition("THIS_IS_CONTROL INS_ALL_HANDS_TO CRIM_A_FIREARM_ATTACK_ON_AN_OFFICER IN_OR_ON_POSITION", this.spawnPoint.Position);
                         break;
-                    case 1: Functions.PlaySoundUsingPosition("THIS_IS_CONTROL INS_AVAILABLE_UNITS_RESPOND_TO CRIM_AN_OFFICER_ASSAULT IN_OR_ON_POSITION", this.spawnPoint.Position);
+                    case 1:
+                        this.CalloutMessage = string.Format(Functions.GetStringFromLanguageFile("POLICE_SCANNER_OFFICER_ATTACKED"), area);
+                        Functions.PlaySoundUsingPosition("THIS_IS_CONTROL INS_AVAILABLE_UNITS_RESPOND_TO CRIM_AN_OFFICER_ASSAULT IN_OR_ON_POSITION", this.spawnPoint.Position);
                         break;
                     case 2:
+                        this.CalloutMessage = string.Format(Resources.CALLOUT_SV_JOHNNY_MESSAGE, area);
                         string audioMessage = Functions.CreateRandomAudioIntroString(EIntroReportedBy.Officers);
                         string crimeMessage = "CRIM_GANG_RELATED_VIOLENCE";
                         if (Common.GetRandomBool(0, 2, 1))
@@ -171,6 +194,7 @@ namespace SuperVillains.Callouts
             }
             else
             {
+                this.CalloutMessage = string.Format(Resources.CALLOUT_SV_JOHNNY_MESSAGE, area);
                 string audioMessage = Functions.CreateRandomAudioIntroString(EIntroReportedBy.Civilians);
                 string crimeMessage = "CRIM_GANG_RELATED_VIOLENCE";
                 if (Common.GetRandomBool(0, 2, 1))
@@ -204,7 +228,7 @@ namespace SuperVillains.Callouts
             this.blip.RouteActive = true;
 
             // Decide whether prank call or not
-            if (Common.GetRandomBool(0, 5, 1) && !isOfficerCalledIn)
+            if (Common.GetRandomBool(0, 5, 1) && (!isOfficerCalledIn | !isNGDRequestingAssistance))
             {
                 Log.Debug("OnCalloutAccepted: Is prank", this);
                 this.SetAsPrankCall();
@@ -375,11 +399,10 @@ namespace SuperVillains.Callouts
                     this.criminals.Add(terry);
                 }
 
-                // Chance to spawn NGD Personnel fighting each other
+                // If isNGDRequestingAssistance is true and isOfficerCalledIn is false, spawn NGD members to fight with the bikers
                 // If spawned, it'll start fighting immediately
-                if (Common.GetRandomBool(0, 2, 1))
+                if (isNGDRequestingAssistance & !isOfficerCalledIn)
                 {
-                    isOfficerCalledIn = true;
                     NGD_Personnels = new List<LPed>();
                     random = Common.GetRandomValue(6, 13);
                     for (int i = 0; i < random; i++)
@@ -435,6 +458,164 @@ namespace SuperVillains.Callouts
                     ngdveh1.NoLongerNeeded();
                     ngdveh2.NoLongerNeeded();
                 }
+                // If isNGDRequestingAssistance is false and isOfficerCalledIn is true, spawn police officers to fight with the bikers
+                // If spawned, it'll start fighting immediately
+                else if (!isNGDRequestingAssistance & isOfficerCalledIn)
+                {
+                    officers = new List<LPed>();
+                    random = Common.GetRandomValue(4, 6);
+                    for (int i = 0; i < random; i++)
+                    {
+                        LPed officer = null;
+                        if (!World.GetZoneName(this.spawnPoint.Position).Contains("Alderney"))
+                            officer = new LPed(this.spawnPoint.Position.Around((float)Common.GetRandomValue(8,15)), Common.GetRandomCollectionValue<string>(copModel), LPed.EPedGroup.Cop);
+                        else officer = new LPed(this.spawnPoint.Position.Around((float)Common.GetRandomValue(8,15)), stateTrooperModel, LPed.EPedGroup.Cop);
+
+                        if (officer.isObjectValid())
+                        {
+                            Functions.AddToScriptDeletionList(officer, this);
+
+                            officer.RelationshipGroup = RelationshipGroup.Cop;
+                            officer.ChangeRelationship(RelationshipGroup.Cop, Relationship.Companion);
+                            officer.ChangeRelationship(RelationshipGroup.Gang_Biker2, Relationship.Hate);
+                            officer.ChangeRelationship(RelationshipGroup.Special, Relationship.Hate);
+
+                            officer.Weapons.Uzi.Ammo = 999;
+                            officer.Weapons.Uzi.Select();
+                            officer.PriorityTargetForEnemies = true;
+
+                            this.officers.Add(officer);
+                        }
+                    }
+                    this.State = EShootoutState.Fighting;
+                    this.Engage();
+
+                    // Request one backup unit automatically
+                    Functions.RequestPoliceBackupAtPosition(LPlayer.LocalPlayer.Ped.Position);
+                    Functions.PlaySoundUsingPosition("DFROM_DISPATCH_2_UNITS_FROM POSITION", LPlayer.LocalPlayer.Ped.Position);
+
+                    // Create police vehicle
+                    Vehicle polveh1 = World.CreateVehicle(new Model("POLICE"), World.GetNextPositionOnStreet(this.spawnPoint.Position.Around(18.1f)).ToGround());
+                    Vehicle polveh2 = World.CreateVehicle(new Model("POLICE"), polveh1.Position.Around(3f).ToGround());
+
+                    polveh1.SirenActive = true;
+                    polveh2.SirenActive = polveh1.SirenActive;
+
+                    // Release them as an ambient vehicle
+                    polveh1.NoLongerNeeded();
+                    polveh2.NoLongerNeeded();
+                }
+                // If both isNGDRequestingAssistance and isOfficerCalledIn are true, spawn NGD members, NOOSE, and police officers to fight with the bikers
+                // If spawned, it'll start fighting immediately
+                else if (isNGDRequestingAssistance & isOfficerCalledIn)
+                {
+                    NGD_Personnels = new List<LPed>();
+                    officers = new List<LPed>();
+                    random = Common.GetRandomValue(8, 12);
+                    for (int i = 0; i < random; i++)
+                    {
+                        LPed NGD = new LPed(World.GetPositionAround(this.spawnPoint.Position, 15f).ToGround(), Common.GetRandomCollectionValue<string>(this.NGD_MemberModels), LPed.EPedGroup.Cop);
+                        if (NGD.isObjectValid()) // derived from ValidityCheck - greetings to LtFlash
+                        {
+                            Functions.AddToScriptDeletionList(NGD, this);
+                            //Functions.SetPedIsOwnedByScript(NGD, this, true);
+                            NGD.RelationshipGroup = RelationshipGroup.Cop;
+                            NGD.ChangeRelationship(RelationshipGroup.Cop, Relationship.Companion);
+                            NGD.ChangeRelationship(RelationshipGroup.Gang_Biker2, Relationship.Hate);
+                            NGD.ChangeRelationship(RelationshipGroup.Special, Relationship.Hate);
+
+                            // We don't want the personnel to flee yet
+                            //NGD.DisablePursuitAI = true;
+
+                            NGD.Weapons.RemoveAll();
+                            NGD.Weapons.Glock.Ammo = 999;
+                            NGD.Weapons.BasicShotgun.Ammo = 999;
+                            if (Common.GetRandomBool(0, 100, 0))
+                            {
+                                NGD.Weapons.BasicSniperRifle.Ammo = 100;
+                                NGD.Weapons.BasicSniperRifle.Select();
+                                NGD.DefaultWeapon = Weapon.SniperRifle_Basic;
+                            }
+                            else
+                            {
+                                NGD.Weapons.AssaultRifle_M4.Ammo = 999;
+                                NGD.Weapons.AssaultRifle_M4.Select();
+                                NGD.DefaultWeapon = Weapon.Rifle_M4;
+                            }
+
+                            NGD.PriorityTargetForEnemies = true;
+
+                            // Randomize NGD ped component variation
+                            Function.Call("SET_CHAR_RANDOM_COMPONENT_VARIATION", new Parameter[] { NGD.GPed });
+                            this.NGD_Personnels.Add(NGD);
+                        }
+                    }
+
+                    random = Common.GetRandomValue(4, 8);
+                    for (int i = 0; i < random; i++)
+                    {
+                        LPed officer = null;
+                        if (!World.GetZoneName(this.spawnPoint.Position).Contains("Alderney"))
+                            officer = new LPed(this.spawnPoint.Position.Around((float)Common.GetRandomValue(8, 15)), Common.GetRandomCollectionValue<string>(copModel), LPed.EPedGroup.Cop);
+                        else officer = new LPed(this.spawnPoint.Position.Around((float)Common.GetRandomValue(8, 15)), stateTrooperModel, LPed.EPedGroup.Cop);
+
+                        if (officer.isObjectValid())
+                        {
+                            Functions.AddToScriptDeletionList(officer, this);
+
+                            officer.RelationshipGroup = RelationshipGroup.Cop;
+                            officer.ChangeRelationship(RelationshipGroup.Cop, Relationship.Companion);
+                            officer.ChangeRelationship(RelationshipGroup.Gang_Biker2, Relationship.Hate);
+                            officer.ChangeRelationship(RelationshipGroup.Special, Relationship.Hate);
+
+                            officer.Weapons.Uzi.Ammo = 999;
+                            officer.Weapons.Uzi.Select();
+                            officer.PriorityTargetForEnemies = true;
+
+                            this.officers.Add(officer);
+                        }
+                    }
+
+                    for (int i = 0; i < 4; i++)
+                    {
+                        LPed officer = new LPed(World.GetPositionAround(this.spawnPoint.Position, 16.5f), "M_Y_SWAT");
+                        if (officer.isObjectValid())
+                        {
+                            Functions.AddToScriptDeletionList(officer, this);
+
+                            officer.RelationshipGroup = RelationshipGroup.Cop;
+                            officer.ChangeRelationship(RelationshipGroup.Cop, Relationship.Companion);
+                            officer.ChangeRelationship(RelationshipGroup.Gang_Biker2, Relationship.Hate);
+                            officer.ChangeRelationship(RelationshipGroup.Special, Relationship.Hate);
+
+                            officer.PriorityTargetForEnemies = true;
+
+                            this.officers.Add(officer);
+                        }
+                    }
+
+                    // Request one backup unit automatically
+                    Functions.RequestPoliceBackupAtPosition(LPlayer.LocalPlayer.Ped.Position);
+                    Functions.PlaySoundUsingPosition("DFROM_DISPATCH_2_UNITS_FROM POSITION", LPlayer.LocalPlayer.Ped.Position);
+
+                    // Create police and random vehicles
+                    Vehicle polveh1 = World.CreateVehicle(new Model("POLICE"), World.GetNextPositionOnStreet(this.spawnPoint.Position.Around((float)Common.GetRandomValue(10,15))).ToGround());
+                    Vehicle polveh2 = World.CreateVehicle(new Model("POLICE"), polveh1.Position.Around(3f).ToGround());
+                    Vehicle polveh3 = World.CreateVehicle(new Model("NSTOCKADE"), World.GetNextPositionOnStreet(this.spawnPoint.Position).Around(2.0f).ToGround());
+                    Vehicle ngdveh1 = World.CreateVehicle(World.GetNextPositionOnStreet(this.spawnPoint.Position.Around(18.1f)).ToGround());
+                    Vehicle ngdveh2 = World.CreateVehicle(ngdveh1.Position.Around(3f).ToGround());
+
+                    polveh1.SirenActive = true;
+                    polveh2.SirenActive = polveh1.SirenActive;
+                    polveh3.SirenActive = polveh2.SirenActive;
+
+                    // Release them as an ambient vehicle
+                    polveh1.NoLongerNeeded();
+                    polveh2.NoLongerNeeded();
+                    polveh3.NoLongerNeeded();
+                    ngdveh1.NoLongerNeeded();
+                    ngdveh2.NoLongerNeeded();
+                }
                 isReady = true;
             }
                 catch (Exception ex) { Log.Error("OnCalloutAccepted: Cannot create Pursuit instance: " + ex, this); isReady = false; }
@@ -448,8 +629,16 @@ namespace SuperVillains.Callouts
                 this.RegisterStateCallback(EShootoutState.Fighting, this.InCombat);
                 this.RegisterStateCallback(EShootoutState.Prank, this.Prank);
                 this.State = EShootoutState.WaitingForPlayer;
-                Functions.AddTextToTextwall(string.Format(Resources.TEXT_INFO_RELAY_SV_JOHNNY, johnny.PersonaData.FullName, johnny.PersonaData.BirthDay),
-                    Functions.GetStringFromLanguageFile("POLICE_SCANNER_CONTROL"));
+                if (!this.IsPrankCall)
+                    Functions.AddTextToTextwall(string.Format(Resources.TEXT_INFO_RELAY_SV_JOHNNY, johnny.PersonaData.FullName, johnny.PersonaData.BirthDay),
+                        Functions.GetStringFromLanguageFile("POLICE_SCANNER_CONTROL"));
+                else DelayedCaller.Call(delegate
+                {
+                    Functions.AddTextToTextwall(Resources.TEXT_INFO_RELAY_SV_JOHNNY_PRANK, Functions.GetStringFromLanguageFile("POLICE_SCANNER_CONTROL"));
+                    // Request one backup unit automatically
+                    Functions.RequestPoliceBackupAtPosition(LPlayer.LocalPlayer.Ped.Position);
+                    Functions.PlaySoundUsingPosition("DFROM_DISPATCH_2_UNITS_FROM POSITION", LPlayer.LocalPlayer.Ped.Position);
+                }, this, Common.GetRandomValue(3000, 6001));
                 Functions.PrintText(Functions.GetStringFromLanguageFile("CALLOUT_GET_TO_CRIME_SCENE"), 8000);
             }
 
@@ -590,9 +779,11 @@ namespace SuperVillains.Callouts
             Functions.SetPursuitDontEnableCopBlips(this.pursuit, false);
             Functions.SetPursuitAllowWeaponsForSuspects(this.pursuit, true);
             Functions.SetPursuitForceSuspectsToFight(this.pursuit, true);
-            if (isOfficerCalledIn)
+
+            // Update tasking (print message to text wall) and override maximum units and pursuit tactics if isNGDRequestingAssistance is true
+            if (isNGDRequestingAssistance)
             {
-                Functions.SetPursuitIsActiveDelayed(this.pursuit, 0, Common.GetRandomValue(1000, 5000));
+                Functions.SetPursuitIsActiveDelayed(this.pursuit, 0, Common.GetRandomValue(1000, 3000));
                 Functions.SetPursuitTactics(this.pursuit, true);
                 Functions.SetPursuitHelicopterTactics(this.pursuit, true);
                 Functions.SetPursuitMaximumUnits(this.pursuit, 40, 40);
@@ -602,6 +793,15 @@ namespace SuperVillains.Callouts
                     Functions.AddTextToTextwall(Resources.TEXT_INFO_RELAY_SV_JOHNNY_MISSION_UPDATE, Functions.GetStringFromLanguageFile("POLICE_SCANNER_CONTROL"));
                 }, this, 5000);
             }
+            // If isNGDRequestingAssistance is false while isOfficerCalledIn is true, override maximum units and pursuit tactics but DO NOT update tasking
+            else if (isOfficerCalledIn && !isNGDRequestingAssistance)
+            {
+                Functions.SetPursuitIsActiveDelayed(this.pursuit, 0, Common.GetRandomValue(1000, 5000));
+                Functions.SetPursuitTactics(this.pursuit, true);
+                Functions.SetPursuitHelicopterTactics(this.pursuit, true);
+                Functions.SetPursuitMaximumUnits(this.pursuit, 40, 40);
+            }
+            // Otherwise set pursuit as active and delayed between 2500ms and 5000ms
             else Functions.SetPursuitIsActiveDelayed(this.pursuit, 2500, 5000);
         }
 

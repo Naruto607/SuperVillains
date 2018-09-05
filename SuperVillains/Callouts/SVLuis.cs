@@ -170,6 +170,8 @@ namespace SuperVillains.Callouts
                 // Since we want other cops to join, set as called in already and also active it for player
                 Functions.SetPursuitCalledIn(this.pursuit, true);
                 Functions.SetPursuitIsActiveForPlayer(this.pursuit, true);
+                // Add a chance that the suspect forced to fight back
+                Functions.SetPursuitForceSuspectsToFight(this.pursuit, Common.GetRandomBool(0, 2, 1));
 
                 // Show message to the player
                 Functions.PrintText(Functions.GetStringFromLanguageFile("CALLOUT_ROBBERY_CATCH_UP"), 25000);
